@@ -8,6 +8,7 @@ test("loadEnv parsea y castea PORT a número", () => {
     WEB_ORIGIN: "http://localhost:5173",
     DATABASE_PATH: "./.pgdata",
     CODE_SECRET: "secret",
+    SESSION_SECRET: "session-secret",
     EMAIL_FROM: "x@y.z",
   });
   assert.equal(env.PORT, 3000);

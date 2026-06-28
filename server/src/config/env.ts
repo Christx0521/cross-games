@@ -16,6 +16,8 @@ const schema = z.object({
   WEB_ORIGIN: z.url().default("http://localhost:5173"),
   DATABASE_PATH: z.string().min(1).default("./.pgdata"),
   CODE_SECRET: z.string().min(1),
+  SESSION_SECRET: z.string().min(1),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   RESEND_API_KEY: z.string().default(""),
   EMAIL_FROM: z.string().min(1).default("Cross-Games <onboarding@resend.dev>"),
 });

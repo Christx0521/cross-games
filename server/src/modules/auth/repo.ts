@@ -26,6 +26,14 @@ export function createAuthRepo(db: PGlite) {
       return r.rows[0] ?? null;
     },
 
+    async findUserByIdentifier(identifier: string): Promise<UserRow | null> {
+      const r = await db.query<UserRow>(
+        "SELECT * FROM users WHERE email = $1 OR nickname = $2",
+        [identifier.toLowerCase(), identifier]
+      );
+      return r.rows[0] ?? null;
+    },
+
     async findByEmailOrNickname(
       email: string,
       nickname: string
