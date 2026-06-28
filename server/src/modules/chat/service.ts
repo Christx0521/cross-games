@@ -71,6 +71,10 @@ export function createChatService(deps: { repo: ChatRepo }) {
     getMemberIds(conversationId: string): Promise<string[]> {
       return repo.getMemberIds(conversationId);
     },
+
+    isMemberOf(conversationId: string, userId: string): Promise<boolean> {
+      return repo.isMember(conversationId, userId);
+    },
   };
 }
 

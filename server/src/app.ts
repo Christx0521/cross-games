@@ -15,6 +15,9 @@ import { profileRoutes } from "./modules/profile/routes.ts";
 import { createFriendsRepo } from "./modules/friends/repo.ts";
 import { createFriendsService, type Notify } from "./modules/friends/service.ts";
 import { friendsRoutes } from "./modules/friends/routes.ts";
+import { createChatRepo } from "./modules/chat/repo.ts";
+import { createChatService } from "./modules/chat/service.ts";
+import { chatRoutes } from "./modules/chat/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -53,6 +56,8 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const sessionRepo = createSessionRepo(opts.db);
   const profileRepo = createProfileRepo(opts.db);
   const friendsRepo = createFriendsRepo(opts.db);
+  const chatRepo = createChatRepo(opts.db);
+  const chatService = createChatService({ repo: chatRepo });
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
   const passwordService = createPasswordService({ authRepo, sessionRepo });
@@ -79,16 +84,47 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
     }
   });
 
-  // Cada usuario conectado se une a su room privada para notificaciones dirigidas.
-  io.on("connection", (socket) => {
-    const user = socket.data.user;
-    if (user) socket.join(`user:${user.id}`);
-  });
-
   const notify: Notify = (userId, event, payload) => {
     io.to(`user:${userId}`).emit(event, payload);
   };
   const friendsService = createFriendsService({ repo: friendsRepo, notify });
+
+  // Cada usuario conectado se une a su room privada para notificaciones dirigidas.
+  io.on("connection", (socket) => {
+    const user = socket.data.user;
+    if (!user) return;
+    socket.join(`user:${user.id}`);
+
+    socket.on("message:send", async (payload: { conversationId?: string; body?: string }, ack?: (res: unknown) => void) => {
+      try {
+        const conversationId = String(payload?.conversationId ?? "");
+        const body = String(payload?.body ?? "");
+        const msg = await chatService.postMessage(user.id, conversationId, body);
+        const members = await chatService.getMemberIds(conversationId);
+        for (const memberId of members) {
+          io.to(`user:${memberId}`).emit("message:new", msg);
+        }
+        ack?.({ ok: true, message: msg });
+      } catch (err) {
+        const code = err instanceof AppError ? err.code : "error";
+        ack?.({ ok: false, code });
+      }
+    });
+
+    socket.on("typing", async (payload: { conversationId?: string }) => {
+      try {
+        const conversationId = String(payload?.conversationId ?? "");
+        if (!(await chatService.isMemberOf(conversationId, user.id))) return;
+        const members = await chatService.getMemberIds(conversationId);
+        for (const memberId of members) {
+          if (memberId === user.id) continue;
+          io.to(`user:${memberId}`).emit("typing", { conversationId, nickname: user.nickname });
+        }
+      } catch {
+        // typing es best-effort; ignorar errores
+      }
+    });
+  });
 
   app.decorate("io", io);
   app.addHook("onClose", async () => {
@@ -112,6 +148,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(passwordRoutes, { passwordService });
   await app.register(profileRoutes, { profileService, sessionService });
   await app.register(friendsRoutes, { friendsService, sessionService });
+  await app.register(chatRoutes, { chatService, sessionService });
 
   return app;
 }
