@@ -5,17 +5,35 @@ import { VerifyEmail } from "./pages/VerifyEmail.tsx";
 import { Login } from "./pages/Login.tsx";
 import { ForgotPassword } from "./pages/ForgotPassword.tsx";
 import { ResetPassword } from "./pages/ResetPassword.tsx";
+import { Profile } from "./pages/Profile.tsx";
+import { EditProfile } from "./pages/EditProfile.tsx";
 import { Card, Button } from "./components/ui.tsx";
 
 type View = "login" | "register" | "verify" | "forgot" | "reset";
+type HomeView = "home" | "profile" | "edit";
 
 function Home() {
   const { user, logout } = useAuth();
+  const [view, setView] = useState<HomeView>("home");
+
+  if (view === "profile" && user) {
+    return <Profile nickname={user.nickname} onBack={() => setView("home")} />;
+  }
+  if (view === "edit") {
+    return <EditProfile onBack={() => setView("home")} />;
+  }
+
   return (
     <Card>
       <h1 className="text-2xl font-bold text-[var(--color-green)]">¡Hola, {user?.nickname}!</h1>
       <p className="mt-2 mb-6 text-[var(--color-comment)]">Sesión iniciada en Cross-Games.</p>
-      <Button onClick={() => void logout()}>Cerrar sesión</Button>
+      <div className="flex flex-col gap-3">
+        <Button onClick={() => setView("profile")}>Ver mi perfil</Button>
+        <Button onClick={() => setView("edit")}>Editar perfil</Button>
+        <button onClick={() => void logout()} className="w-full text-sm text-[var(--color-comment)] hover:underline">
+          Cerrar sesión
+        </button>
+      </div>
     </Card>
   );
 }

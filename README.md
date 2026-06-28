@@ -46,4 +46,7 @@ cd server; npm test
 - **M3 — Reset de password: completo.**
   - `POST /auth/forgot-password`, `POST /auth/reset-password`.
   - Código por email (purpose `password_reset`); el reset invalida todas las sesiones del usuario.
-- Próximos: M4 (perfil), M5 (amigos), M6 (chat), M7 (grupos), M8 (foros).
+- **M4 — Perfil de usuario: completo.**
+  - `GET /users/:nickname` (público, sin datos sensibles, `is_adult`), `PATCH /me/profile`, `POST /me/avatar`.
+  - Avatar en disco tras interfaz `Storage` (PNG/JPEG/WebP, ≤2 MB); país (ISO) e idiomas.
+- Próximos: M5 (amigos), M6 (chat), M7 (grupos), M8 (foros).
