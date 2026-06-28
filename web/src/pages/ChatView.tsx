@@ -5,8 +5,23 @@ import { type Message, type HistoryPage } from "../lib/chat.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { Card, Button, Alert } from "../components/ui.tsx";
 
-export function ChatView({ conversationId, title, onBack }: { conversationId: string; title: string; onBack: () => void }) {
+export function ChatView({
+  conversationId,
+  title,
+  onBack,
+  isForum = false,
+  forumId,
+}: {
+  conversationId: string;
+  title: string;
+  onBack: () => void;
+  isForum?: boolean;
+  forumId?: string;
+}) {
   const { user } = useAuth();
+  const historyUrl = isForum
+    ? `/forums/${forumId}/messages`
+    : `/conversations/${conversationId}/messages`;
   const [messages, setMessages] = useState<Message[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -32,7 +47,7 @@ export function ChatView({ conversationId, title, onBack }: { conversationId: st
   useEffect(() => {
     let active = true;
     api
-      .get<HistoryPage>(`/conversations/${conversationId}/messages?limit=30`)
+      .get<HistoryPage>(`${historyUrl}?limit=30`)
       .then((page) => {
         if (!active) return;
         setMessages(page.messages);
@@ -46,11 +61,12 @@ export function ChatView({ conversationId, title, onBack }: { conversationId: st
     return () => {
       active = false;
     };
-  }, [conversationId]);
+  }, [conversationId, historyUrl]);
 
   // Suscripción a mensajes nuevos y typing.
   useEffect(() => {
     const socket = getSocket();
+    if (isForum) socket.emit("forum:join", { conversationId });
     const onNew = (msg: Message) => {
       if (msg.conversation_id === conversationId) mergeMessage(msg);
     };
@@ -66,14 +82,14 @@ export function ChatView({ conversationId, title, onBack }: { conversationId: st
       socket.off("message:new", onNew);
       socket.off("typing", onTyping);
     };
-  }, [conversationId, mergeMessage]);
+  }, [conversationId, mergeMessage, isForum]);
 
   async function loadOlder() {
     if (!conversationId || !cursor) return;
     const el = scrollRef.current;
     const prevHeight = el?.scrollHeight ?? 0;
     const page = await api.get<HistoryPage>(
-      `/conversations/${conversationId}/messages?limit=30&before=${encodeURIComponent(cursor)}`
+      `${historyUrl}?limit=30&before=${encodeURIComponent(cursor)}`
     );
     setMessages((prev) => [...page.messages, ...prev]);
     setCursor(page.nextCursor);

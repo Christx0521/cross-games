@@ -58,4 +58,7 @@ cd server; npm test
 - **M7 — Grupos privados: completo.**
   - `POST /groups`, `POST /groups/:id/members`, `DELETE /groups/:id/members/:userId`, `GET /groups`.
   - type=group (reutiliza el motor); solo admin gestiona; tope 20. ChatView unificado (DM/grupo/foro).
-- Próximos: M8 (foros).
+- **M8 — Foros públicos: completo.**
+  - `GET /forums` y `GET /forums/:id/messages` públicos; `POST /forums` requiere sesión.
+  - Filtro con país prioritario + idioma + continente. Socket permite lectura anónima en vivo (forum:join); postear exige sesión.
+**MVP completo (M1–M8).** Próxima fase: M9 (integraciones de juego).

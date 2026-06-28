@@ -9,15 +9,17 @@ import { Profile } from "./pages/Profile.tsx";
 import { EditProfile } from "./pages/EditProfile.tsx";
 import { Friends } from "./pages/Friends.tsx";
 import { Groups } from "./pages/Groups.tsx";
+import { Forums } from "./pages/Forums.tsx";
 import { ChatView } from "./pages/ChatView.tsx";
 import { Card, Button } from "./components/ui.tsx";
 
 type View = "login" | "register" | "verify" | "forgot" | "reset";
-type HomeView = "home" | "profile" | "edit" | "friends" | "groups" | "chat";
+type HomeView = "home" | "profile" | "edit" | "friends" | "groups" | "forums" | "chat";
 
 export interface OpenChat {
   conversationId: string;
   title: string;
+  forumId?: string;
 }
 
 function Home() {
@@ -44,8 +46,24 @@ function Home() {
   if (view === "groups") {
     return <Groups onBack={() => setView("home")} onOpenChat={(c) => openChat(c, "groups")} />;
   }
+  if (view === "forums") {
+    return (
+      <Forums
+        onBack={() => setView("home")}
+        onOpenForum={(f) => openChat({ conversationId: f.conversationId, title: f.title, forumId: f.forumId }, "forums")}
+      />
+    );
+  }
   if (view === "chat" && chat) {
-    return <ChatView conversationId={chat.conversationId} title={chat.title} onBack={() => setView(chatOrigin)} />;
+    return (
+      <ChatView
+        conversationId={chat.conversationId}
+        title={chat.title}
+        isForum={!!chat.forumId}
+        forumId={chat.forumId}
+        onBack={() => setView(chatOrigin)}
+      />
+    );
   }
 
   return (
@@ -57,6 +75,7 @@ function Home() {
         <Button onClick={() => setView("edit")}>Editar perfil</Button>
         <Button onClick={() => setView("friends")}>Amigos</Button>
         <Button onClick={() => setView("groups")}>Grupos</Button>
+        <Button onClick={() => setView("forums")}>Foros</Button>
         <button onClick={() => void logout()} className="w-full text-sm text-[var(--color-comment)] hover:underline">
           Cerrar sesión
         </button>
