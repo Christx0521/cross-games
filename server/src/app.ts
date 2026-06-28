@@ -49,7 +49,24 @@ declare module "socket.io" {
 export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
 
-  await app.register(cors, { origin: env.WEB_ORIGIN, credentials: true });
+  // En dev aceptamos cualquier localhost/127.0.0.1 (Vite puede usar otro puerto si 5173
+  // está ocupado). En producción, solo el origen configurado.
+  const corsOrigin =
+    env.NODE_ENV === "production"
+      ? env.WEB_ORIGIN
+      : (origin: string | undefined, cb: (err: Error | null, allow: boolean) => void) => {
+          if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+            cb(null, true);
+          } else {
+            cb(null, false);
+          }
+        };
+
+  await app.register(cors, {
+    origin: corsOrigin,
+    credentials: true,
+    methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
+  });
   await app.register(cookie, { secret: env.SESSION_SECRET });
   await app.register(multipart, { limits: { fileSize: 2 * 1024 * 1024, files: 1 } });
 
@@ -73,7 +90,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const profileService = createProfileService({ repo: profileRepo, storage });
 
   const io = new IOServer(app.server, {
-    cors: { origin: env.WEB_ORIGIN, credentials: true },
+    cors: { origin: corsOrigin, credentials: true },
   });
 
   // Autenticación en el handshake: si hay sesión válida adjunta el usuario.
