@@ -1,10 +1,17 @@
+import { join } from "node:path";
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
+import multipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
 import { Server as IOServer } from "socket.io";
 import type { PGlite } from "@electric-sql/pglite";
 import { env } from "./config/env.ts";
 import { AppError } from "./lib/errors.ts";
+import { createDiskStorage } from "./lib/storage.ts";
+import { createProfileRepo } from "./modules/profile/repo.ts";
+import { createProfileService } from "./modules/profile/service.ts";
+import { profileRoutes } from "./modules/profile/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -32,12 +39,20 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
 
   await app.register(cors, { origin: env.WEB_ORIGIN, credentials: true });
   await app.register(cookie, { secret: env.SESSION_SECRET });
+  await app.register(multipart, { limits: { fileSize: 2 * 1024 * 1024, files: 1 } });
+
+  const uploadsDir = join(process.cwd(), "uploads");
+  await app.register(fastifyStatic, { root: uploadsDir, prefix: "/uploads/" });
+
+  const storage = createDiskStorage({ dir: uploadsDir, publicPath: "/uploads" });
 
   const authRepo = createAuthRepo(opts.db);
   const sessionRepo = createSessionRepo(opts.db);
+  const profileRepo = createProfileRepo(opts.db);
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
   const passwordService = createPasswordService({ authRepo, sessionRepo });
+  const profileService = createProfileService({ repo: profileRepo, storage });
 
   const io = new IOServer(app.server, {
     cors: { origin: env.WEB_ORIGIN, credentials: true },
@@ -80,6 +95,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(authRoutes, { service: authService });
   await app.register(sessionRoutes, { sessionService });
   await app.register(passwordRoutes, { passwordService });
+  await app.register(profileRoutes, { profileService, sessionService });
 
   return app;
 }
