@@ -54,17 +54,60 @@ test("dos usuarios chatean en tiempo real por socket", async () => {
   await app.close();
 });
 
-test("conexión socket sin sesión es rechazada", async () => {
+test("conexión anónima se permite pero no puede postear (unauthenticated)", async () => {
   const db = new PGlite();
   await runMigrations(db);
+  const repo = createAuthRepo(db);
+  const service = createAuthService({ repo });
   const app = await buildApp({ db });
+  const alice = await makeUser(app, repo, service, "alice");
+  const dm = await app.inject({ method: "POST", url: "/conversations/dm", headers: { cookie: await makeUser(app, repo, service, "bob") }, payload: { nickname: "alice" } });
+  const conversationId = dm.json().conversationId;
+
   await app.listen({ port: 0, host: "127.0.0.1" });
   const port = (app.server.address() as AddressInfo).port;
 
-  const client: Socket = ioc(`http://127.0.0.1:${port}`, { transports: ["websocket"], reconnection: false });
-  const [err] = await once(client, "connect_error");
-  assert.ok(err);
+  const anon: Socket = ioc(`http://127.0.0.1:${port}`, { transports: ["websocket"], reconnection: false });
+  await once(anon, "connect"); // anónimo conecta OK
+  const ack = await anon.emitWithAck("message:send", { conversationId, body: "intruso" });
+  assert.equal((ack as { ok: boolean; code: string }).ok, false);
+  assert.equal((ack as { code: string }).code, "unauthenticated");
 
-  client.close();
+  void alice;
+  anon.close();
+  await app.close();
+});
+
+test("foro: lectura pública en vivo y posteo de usuario autenticado", async () => {
+  const db = new PGlite();
+  await runMigrations(db);
+  const repo = createAuthRepo(db);
+  const service = createAuthService({ repo });
+  const app = await buildApp({ db });
+  const alice = await makeUser(app, repo, service, "alice");
+
+  const forum = await app.inject({
+    method: "POST", url: "/forums", headers: { cookie: alice },
+    payload: { name: "General", languageCode: "es", continent: "NA", countryCode: "PA" },
+  });
+  const conversationId = forum.json().conversation_id;
+
+  await app.listen({ port: 0, host: "127.0.0.1" });
+  const port = (app.server.address() as AddressInfo).port;
+
+  const reader: Socket = ioc(`http://127.0.0.1:${port}`, { transports: ["websocket"], reconnection: false });
+  const poster: Socket = ioc(`http://127.0.0.1:${port}`, { extraHeaders: { cookie: alice }, transports: ["websocket"], reconnection: false });
+  await Promise.all([once(reader, "connect"), once(poster, "connect")]);
+
+  reader.emit("forum:join", { conversationId });
+  await new Promise((r) => setTimeout(r, 100)); // dar tiempo al join
+
+  const received = once(reader, "message:new");
+  poster.emit("message:send", { conversationId, body: "hola foro" });
+  const [msg] = await received;
+  assert.equal(msg.body, "hola foro");
+
+  reader.close();
+  poster.close();
   await app.close();
 });

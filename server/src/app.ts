@@ -21,6 +21,9 @@ import { chatRoutes } from "./modules/chat/routes.ts";
 import { createGroupsRepo } from "./modules/groups/repo.ts";
 import { createGroupsService } from "./modules/groups/service.ts";
 import { groupsRoutes } from "./modules/groups/routes.ts";
+import { createForumsRepo } from "./modules/forums/repo.ts";
+import { createForumsService } from "./modules/forums/service.ts";
+import { forumsRoutes } from "./modules/forums/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -62,6 +65,8 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const chatRepo = createChatRepo(opts.db);
   const chatService = createChatService({ repo: chatRepo });
   const groupsRepo = createGroupsRepo(opts.db);
+  const forumsRepo = createForumsRepo(opts.db);
+  const forumsService = createForumsService({ repo: forumsRepo, chatRepo });
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
   const passwordService = createPasswordService({ authRepo, sessionRepo });
@@ -71,21 +76,24 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
     cors: { origin: env.WEB_ORIGIN, credentials: true },
   });
 
-  // Autenticación en el handshake: valida la cookie de sesión una vez al conectar.
+  // Autenticación en el handshake: si hay sesión válida adjunta el usuario.
+  // Se permiten conexiones anónimas (lectura pública de foros); postear exige sesión.
   io.use(async (socket, next) => {
     try {
       const header = socket.handshake.headers.cookie;
-      if (!header) return next(new AppError(401, "unauthenticated"));
-      const parsed = app.parseCookie(header);
-      const raw = parsed[SESSION_COOKIE];
-      if (!raw) return next(new AppError(401, "unauthenticated"));
-      const unsigned = app.unsignCookie(raw);
-      if (!unsigned.valid || !unsigned.value) return next(new AppError(401, "unauthenticated"));
-      socket.data.user = await sessionService.me(unsigned.value);
-      next();
+      if (header) {
+        const raw = app.parseCookie(header)[SESSION_COOKIE];
+        if (raw) {
+          const unsigned = app.unsignCookie(raw);
+          if (unsigned.valid && unsigned.value) {
+            socket.data.user = await sessionService.me(unsigned.value);
+          }
+        }
+      }
     } catch {
-      next(new AppError(401, "unauthenticated"));
+      // sesión inválida → conexión anónima
     }
+    next();
   });
 
   const notify: Notify = (userId, event, payload) => {
@@ -94,20 +102,39 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const friendsService = createFriendsService({ repo: friendsRepo, notify });
   const groupsService = createGroupsService({ repo: groupsRepo, notify });
 
-  // Cada usuario conectado se une a su room privada para notificaciones dirigidas.
   io.on("connection", (socket) => {
     const user = socket.data.user;
-    if (!user) return;
-    socket.join(`user:${user.id}`);
+    // Usuario autenticado: room privada para notificaciones dirigidas.
+    if (user) socket.join(`user:${user.id}`);
+
+    // Lectura pública de foros: cualquiera (incluso anónimo) se une a la room del foro.
+    socket.on("forum:join", async (payload: { conversationId?: string }) => {
+      try {
+        const conversationId = String(payload?.conversationId ?? "");
+        if ((await chatService.getConversationType(conversationId)) === "forum") {
+          socket.join(`conversation:${conversationId}`);
+        }
+      } catch {
+        // ignorar
+      }
+    });
 
     socket.on("message:send", async (payload: { conversationId?: string; body?: string }, ack?: (res: unknown) => void) => {
+      if (!user) {
+        ack?.({ ok: false, code: "unauthenticated" });
+        return;
+      }
       try {
         const conversationId = String(payload?.conversationId ?? "");
         const body = String(payload?.body ?? "");
         const msg = await chatService.postMessage(user.id, conversationId, body);
-        const members = await chatService.getMemberIds(conversationId);
-        for (const memberId of members) {
-          io.to(`user:${memberId}`).emit("message:new", msg);
+        if ((await chatService.getConversationType(conversationId)) === "forum") {
+          // Foros: difundir a todos los lectores conectados a la room del foro.
+          io.to(`conversation:${conversationId}`).emit("message:new", msg);
+        } else {
+          // DM/grupo: entregar a las rooms privadas de los miembros.
+          const members = await chatService.getMemberIds(conversationId);
+          for (const memberId of members) io.to(`user:${memberId}`).emit("message:new", msg);
         }
         ack?.({ ok: true, message: msg });
       } catch (err) {
@@ -117,6 +144,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
     });
 
     socket.on("typing", async (payload: { conversationId?: string }) => {
+      if (!user) return;
       try {
         const conversationId = String(payload?.conversationId ?? "");
         if (!(await chatService.isMemberOf(conversationId, user.id))) return;
@@ -155,6 +183,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(friendsRoutes, { friendsService, sessionService });
   await app.register(chatRoutes, { chatService, sessionService });
   await app.register(groupsRoutes, { groupsService, sessionService });
+  await app.register(forumsRoutes, { forumsService, chatService, sessionService });
 
   return app;
 }
