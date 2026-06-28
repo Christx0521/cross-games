@@ -33,7 +33,7 @@ function Avatar({ url, nickname }: { url: string | null; nickname: string }) {
   );
 }
 
-export function Friends({ onBack }: { onBack: () => void }) {
+export function Friends({ onBack, onOpenChat }: { onBack: () => void; onOpenChat: (nickname: string) => void }) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [nickname, setNickname] = useState("");
@@ -124,7 +124,10 @@ export function Friends({ onBack }: { onBack: () => void }) {
           friends.map((f) => (
             <div key={f.id} className="flex items-center gap-3 mb-2">
               <Avatar url={f.avatar_url} nickname={f.nickname} />
-              <span className="text-[var(--color-text)]">{f.nickname}</span>
+              <span className="flex-1 text-[var(--color-text)]">{f.nickname}</span>
+              <button onClick={() => onOpenChat(f.nickname)} className="text-sm text-[var(--color-purple)] hover:underline">
+                Chatear
+              </button>
             </div>
           ))
         )}

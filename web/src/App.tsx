@@ -8,14 +8,16 @@ import { ResetPassword } from "./pages/ResetPassword.tsx";
 import { Profile } from "./pages/Profile.tsx";
 import { EditProfile } from "./pages/EditProfile.tsx";
 import { Friends } from "./pages/Friends.tsx";
+import { ChatView } from "./pages/ChatView.tsx";
 import { Card, Button } from "./components/ui.tsx";
 
 type View = "login" | "register" | "verify" | "forgot" | "reset";
-type HomeView = "home" | "profile" | "edit" | "friends";
+type HomeView = "home" | "profile" | "edit" | "friends" | "chat";
 
 function Home() {
   const { user, logout } = useAuth();
   const [view, setView] = useState<HomeView>("home");
+  const [chatWith, setChatWith] = useState("");
 
   if (view === "profile" && user) {
     return <Profile nickname={user.nickname} onBack={() => setView("home")} />;
@@ -24,7 +26,15 @@ function Home() {
     return <EditProfile onBack={() => setView("home")} />;
   }
   if (view === "friends") {
-    return <Friends onBack={() => setView("home")} />;
+    return (
+      <Friends
+        onBack={() => setView("home")}
+        onOpenChat={(nickname) => { setChatWith(nickname); setView("chat"); }}
+      />
+    );
+  }
+  if (view === "chat") {
+    return <ChatView withNickname={chatWith} onBack={() => setView("friends")} />;
   }
 
   return (

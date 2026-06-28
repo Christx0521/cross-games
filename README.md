@@ -52,4 +52,7 @@ cd server; npm test
 - **M5 — Amigos: completo.**
   - `POST /friends/request`, `POST /friends/:id/accept`, `POST /friends/:id/reject`, `GET /friends`, `GET /friends/requests`.
   - Pares bidireccionales (auto-acepta inversa); notificación en vivo por Socket.IO (rooms `user:<id>`).
-- Próximos: M6 (chat), M7 (grupos), M8 (foros).
+- **M6 — Motor de chat (DM): completo.**
+  - `POST /conversations/dm`, `GET /conversations/:id/messages` (paginación keyset por `seq`).
+  - Socket `message:send` valida membresía y emite `message:new`; `typing`. ChatView con scroll infinito y envío optimista.
+- Próximos: M7 (grupos), M8 (foros).
