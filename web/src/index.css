@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #282a36;
+  --color-surface: #44475a;
+  --color-text: #f8f8f2;
+  --color-comment: #6272a4;
+  --color-purple: #bd93f9;
+  --color-pink: #ff79c6;
+  --color-red: #ff5555;
+  --color-green: #50fa7b;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, sans-serif;
+}
