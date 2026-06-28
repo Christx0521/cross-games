@@ -18,6 +18,9 @@ import { friendsRoutes } from "./modules/friends/routes.ts";
 import { createChatRepo } from "./modules/chat/repo.ts";
 import { createChatService } from "./modules/chat/service.ts";
 import { chatRoutes } from "./modules/chat/routes.ts";
+import { createGroupsRepo } from "./modules/groups/repo.ts";
+import { createGroupsService } from "./modules/groups/service.ts";
+import { groupsRoutes } from "./modules/groups/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -58,6 +61,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const friendsRepo = createFriendsRepo(opts.db);
   const chatRepo = createChatRepo(opts.db);
   const chatService = createChatService({ repo: chatRepo });
+  const groupsRepo = createGroupsRepo(opts.db);
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
   const passwordService = createPasswordService({ authRepo, sessionRepo });
@@ -88,6 +92,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
     io.to(`user:${userId}`).emit(event, payload);
   };
   const friendsService = createFriendsService({ repo: friendsRepo, notify });
+  const groupsService = createGroupsService({ repo: groupsRepo, notify });
 
   // Cada usuario conectado se une a su room privada para notificaciones dirigidas.
   io.on("connection", (socket) => {
@@ -149,6 +154,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(profileRoutes, { profileService, sessionService });
   await app.register(friendsRoutes, { friendsService, sessionService });
   await app.register(chatRoutes, { chatService, sessionService });
+  await app.register(groupsRoutes, { groupsService, sessionService });
 
   return app;
 }
