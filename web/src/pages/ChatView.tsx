@@ -3,7 +3,7 @@ import { api } from "../lib/api.ts";
 import { getSocket } from "../lib/socket.ts";
 import { type Message, type HistoryPage } from "../lib/chat.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
-import { Card, Button, Alert } from "../components/ui.tsx";
+import { Alert } from "../components/ui.tsx";
 
 export function ChatView({
   conversationId,
@@ -14,7 +14,7 @@ export function ChatView({
 }: {
   conversationId: string;
   title: string;
-  onBack: () => void;
+  onBack?: () => void;
   isForum?: boolean;
   forumId?: string;
 }) {
@@ -132,20 +132,26 @@ export function ChatView({
   }
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-[var(--color-pink)]">{title}</h1>
-        <button onClick={onBack} className="text-sm text-[var(--color-comment)] hover:underline">Volver</button>
-      </div>
-      {error && <Alert kind="error">{error}</Alert>}
+    <div className="flex flex-col h-full">
+      <header className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        {onBack && (
+          <button onClick={onBack} className="text-[var(--color-muted)] hover:text-[var(--color-text)] text-lg">←</button>
+        )}
+        <div className="w-9 h-9 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-[var(--color-pink)] font-bold">
+          {title.charAt(0).toUpperCase()}
+        </div>
+        <h1 className="text-lg font-bold text-[var(--color-text)]">{title}</h1>
+      </header>
+
+      {error && <div className="px-5 pt-3"><Alert kind="error">{error}</Alert></div>}
 
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="h-80 overflow-y-auto flex flex-col gap-2 mb-3 pr-1"
+        className="flex-1 overflow-y-auto flex flex-col gap-2 px-5 py-4"
       >
         {hasMore && (
-          <button onClick={() => void loadOlder()} className="text-xs text-[var(--color-purple)] hover:underline">
+          <button onClick={() => void loadOlder()} className="text-xs text-[var(--color-purple)] hover:underline self-center">
             Cargar mensajes anteriores
           </button>
         )}
@@ -154,31 +160,33 @@ export function ChatView({
           return (
             <div
               key={m.id}
-              className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${
+              className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm ${
                 mine
-                  ? "self-end bg-[var(--color-purple)] text-[var(--color-bg)]"
-                  : "self-start bg-[var(--color-bg)] text-[var(--color-text)]"
+                  ? "self-end bg-[var(--color-pink)] text-[var(--color-bg)] rounded-br-sm"
+                  : "self-start bg-[var(--color-surface-2)] text-[var(--color-text)] rounded-bl-sm"
               } ${m.optimistic ? "opacity-60" : ""}`}
             >
               {!mine && (
-                <span className="block text-xs text-[var(--color-comment)] mb-0.5">{m.sender_nickname}</span>
+                <span className="block text-xs text-[var(--color-purple)] mb-0.5 font-semibold">{m.sender_nickname}</span>
               )}
               {m.body}
             </div>
           );
         })}
-        {typing && <span className="text-xs text-[var(--color-comment)]">escribiendo…</span>}
+        {typing && <span className="text-xs text-[var(--color-muted)] italic">escribiendo…</span>}
       </div>
 
-      <form onSubmit={send} className="flex gap-2">
+      <form onSubmit={send} className="flex gap-2 px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
         <input
-          className="flex-1 px-3 py-2 rounded-lg bg-[var(--color-bg)] text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-purple)]"
+          className="flex-1 px-4 py-2 rounded-full bg-[var(--color-surface-2)] text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-pink)]"
           value={body}
           onChange={(e) => { setBody(e.target.value); notifyTyping(); }}
           placeholder="Escribe un mensaje…"
         />
-        <Button type="submit">Enviar</Button>
+        <button type="submit" className="px-5 py-2 rounded-full font-semibold bg-[var(--color-pink)] text-[var(--color-bg)] hover:bg-[var(--color-magenta)] transition-colors">
+          Enviar
+        </button>
       </form>
-    </Card>
+    </div>
   );
 }

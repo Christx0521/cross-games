@@ -31,7 +31,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export function Button({ children, ...props }: ButtonProps) {
   return (
     <button
-      className="w-full py-2 rounded-lg font-semibold bg-[var(--color-purple)] text-[var(--color-bg)] hover:bg-[var(--color-pink)] transition-colors disabled:opacity-50"
+      className="w-full py-2 rounded-lg font-semibold bg-[var(--color-pink)] text-[var(--color-bg)] hover:bg-[var(--color-magenta)] transition-colors disabled:opacity-50"
       {...props}
     >
       {children}
@@ -42,7 +42,7 @@ export function Button({ children, ...props }: ButtonProps) {
 export function Alert({ kind, children }: { kind: "error" | "success"; children: ReactNode }) {
   const color = kind === "error" ? "var(--color-red)" : "var(--color-green)";
   return (
-    <div className="mb-4 px-3 py-2 rounded-lg text-sm" style={{ background: color, color: "#282a36" }}>
+    <div className="mb-4 px-3 py-2 rounded-lg text-sm font-medium" style={{ background: color, color: "var(--color-bg)" }}>
       {children}
     </div>
   );

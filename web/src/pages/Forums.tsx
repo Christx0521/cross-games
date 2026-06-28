@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api.ts";
 import { flagEmoji } from "../lib/profile.ts";
-import { Card, Field, Button, Alert } from "../components/ui.tsx";
+import { Field, Button, Alert } from "../components/ui.tsx";
 
 interface Forum {
   id: string;
@@ -36,7 +36,7 @@ const MESSAGES: Record<string, string> = {
   invalid_request: "Revisa los datos del foro.",
 };
 
-export function Forums({ onBack, onOpenForum }: { onBack: () => void; onOpenForum: (f: OpenForum) => void }) {
+export function Forums({ onOpenForum }: { onOpenForum: (f: OpenForum) => void }) {
   const [forums, setForums] = useState<Forum[]>([]);
   const [country, setCountry] = useState("");
   const [language, setLanguage] = useState("");
@@ -76,7 +76,7 @@ export function Forums({ onBack, onOpenForum }: { onBack: () => void; onOpenForu
   }
 
   return (
-    <Card>
+    <div className="h-full overflow-y-auto p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-4 text-[var(--color-pink)]">Foros</h1>
       {error && <Alert kind="error">{error}</Alert>}
 
@@ -150,10 +150,6 @@ export function Forums({ onBack, onOpenForum }: { onBack: () => void; onOpenForu
           + Crear un foro
         </button>
       )}
-
-      <button onClick={onBack} className="w-full text-sm text-[var(--color-comment)] hover:underline">
-        Volver
-      </button>
-    </Card>
+    </div>
   );
 }

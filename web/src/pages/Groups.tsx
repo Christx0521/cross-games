@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api.ts";
-import { Card, Field, Button, Alert } from "../components/ui.tsx";
+import { Field, Button, Alert } from "../components/ui.tsx";
 
 interface Group {
   id: string;
@@ -21,7 +21,7 @@ const MESSAGES: Record<string, string> = {
   invalid_request: "Datos inválidos.",
 };
 
-export function Groups({ onBack, onOpenChat }: { onBack: () => void; onOpenChat: (chat: OpenChat) => void }) {
+export function Groups({ onOpenChat }: { onOpenChat: (chat: OpenChat) => void }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [name, setName] = useState("");
   const [addNick, setAddNick] = useState<Record<string, string>>({});
@@ -64,7 +64,7 @@ export function Groups({ onBack, onOpenChat }: { onBack: () => void; onOpenChat:
   }
 
   return (
-    <Card>
+    <div className="h-full overflow-y-auto p-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6 text-[var(--color-pink)]">Grupos</h1>
       {error && <Alert kind="error">{error}</Alert>}
       {info && <Alert kind="success">{info}</Alert>}
@@ -107,10 +107,6 @@ export function Groups({ onBack, onOpenChat }: { onBack: () => void; onOpenChat:
           </div>
         ))
       )}
-
-      <button onClick={onBack} className="w-full text-sm text-[var(--color-comment)] hover:underline">
-        Volver
-      </button>
-    </Card>
+    </div>
   );
 }

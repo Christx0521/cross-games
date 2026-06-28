@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api, API_BASE, ApiError } from "../lib/api.ts";
 import { type PublicProfile } from "../lib/profile.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
-import { Card, Field, Button, Alert } from "../components/ui.tsx";
+import { Field, Button, Alert } from "../components/ui.tsx";
 
 const MESSAGES: Record<string, string> = {
   invalid_country_code: "Código de país inválido (2 letras, p. ej. PA).",
@@ -12,7 +12,7 @@ const MESSAGES: Record<string, string> = {
   file_too_large: "La imagen supera los 2 MB.",
 };
 
-export function EditProfile({ onBack }: { onBack: () => void }) {
+export function EditProfile({ onBack }: { onBack?: () => void }) {
   const { user } = useAuth();
   const [description, setDescription] = useState("");
   const [countryCode, setCountryCode] = useState("");
@@ -74,7 +74,7 @@ export function EditProfile({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <Card>
+    <div className="h-full overflow-y-auto p-6 max-w-xl">
       <h1 className="text-2xl font-bold mb-6 text-[var(--color-pink)]">Editar perfil</h1>
       {error && <Alert kind="error">{error}</Alert>}
       {info && <Alert kind="success">{info}</Alert>}
@@ -116,9 +116,11 @@ export function EditProfile({ onBack }: { onBack: () => void }) {
         />
         <Button type="submit" disabled={loading}>{loading ? "Guardando…" : "Guardar"}</Button>
       </form>
-      <button onClick={onBack} className="mt-4 w-full text-sm text-[var(--color-comment)] hover:underline">
-        Volver
-      </button>
-    </Card>
+      {onBack && (
+        <button onClick={onBack} className="mt-4 w-full text-sm text-[var(--color-muted)] hover:underline">
+          ← Volver al perfil
+        </button>
+      )}
+    </div>
   );
 }

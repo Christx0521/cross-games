@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { api, API_BASE, ApiError } from "../lib/api.ts";
 import { type PublicProfile, flagEmoji } from "../lib/profile.ts";
-import { Card, Button, Alert } from "../components/ui.tsx";
+import { Button, Alert } from "../components/ui.tsx";
 
-export function Profile({ nickname, onBack }: { nickname: string; onBack: () => void }) {
+export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () => void }) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [error, setError] = useState("");
 
@@ -16,41 +16,38 @@ export function Profile({ nickname, onBack }: { nickname: string; onBack: () => 
 
   if (error) {
     return (
-      <Card>
+      <div className="h-full overflow-y-auto p-6 max-w-xl">
         <Alert kind="error">{error}</Alert>
-        <Button onClick={onBack}>Volver</Button>
-      </Card>
+      </div>
     );
   }
 
   if (!profile) {
     return (
-      <Card>
-        <p className="text-[var(--color-comment)]">Cargando perfil…</p>
-      </Card>
+      <div className="h-full p-6">
+        <p className="text-[var(--color-muted)]">Cargando perfil…</p>
+      </div>
     );
   }
 
   return (
-    <Card>
+    <div className="h-full overflow-y-auto p-6 max-w-xl">
       <div className="flex items-center gap-4 mb-4">
         {profile.avatar_url ? (
           <img
             src={`${API_BASE}${profile.avatar_url}`}
             alt={profile.nickname}
-            className="w-20 h-20 rounded-full object-cover ring-2 ring-[var(--color-purple)]"
+            className="w-24 h-24 rounded-full object-cover ring-2 ring-[var(--color-pink)]"
           />
         ) : (
-          <div className="w-20 h-20 rounded-full bg-[var(--color-bg)] flex items-center justify-center text-3xl text-[var(--color-comment)]">
+          <div className="w-24 h-24 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-4xl text-[var(--color-pink)]">
             {profile.nickname.charAt(0).toUpperCase()}
           </div>
         )}
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-pink)]">{profile.nickname}</h1>
           <div className="flex items-center gap-2 mt-1">
-            {profile.country_code && (
-              <span className="text-lg">{flagEmoji(profile.country_code)}</span>
-            )}
+            {profile.country_code && <span className="text-lg">{flagEmoji(profile.country_code)}</span>}
             {profile.is_adult && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-purple)] text-[var(--color-bg)] font-semibold">
                 18+
@@ -60,21 +57,23 @@ export function Profile({ nickname, onBack }: { nickname: string; onBack: () => 
         </div>
       </div>
 
-      {profile.description && (
-        <p className="mb-4 text-[var(--color-text)]">{profile.description}</p>
-      )}
+      {profile.description && <p className="mb-4 text-[var(--color-text)]">{profile.description}</p>}
 
       {profile.languages.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-6 flex flex-wrap gap-2">
           {profile.languages.map((lang) => (
-            <span key={lang} className="text-xs px-2 py-1 rounded-lg bg-[var(--color-bg)] text-[var(--color-comment)] uppercase">
+            <span key={lang} className="text-xs px-2 py-1 rounded-lg bg-[var(--color-surface-2)] text-[var(--color-muted)] uppercase">
               {lang}
             </span>
           ))}
         </div>
       )}
 
-      <Button onClick={onBack}>Volver</Button>
-    </Card>
+      {onEdit && (
+        <div className="max-w-xs">
+          <Button onClick={onEdit}>Editar perfil</Button>
+        </div>
+      )}
+    </div>
   );
 }
