@@ -12,6 +12,9 @@ import { createDiskStorage } from "./lib/storage.ts";
 import { createProfileRepo } from "./modules/profile/repo.ts";
 import { createProfileService } from "./modules/profile/service.ts";
 import { profileRoutes } from "./modules/profile/routes.ts";
+import { createFriendsRepo } from "./modules/friends/repo.ts";
+import { createFriendsService, type Notify } from "./modules/friends/service.ts";
+import { friendsRoutes } from "./modules/friends/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -49,6 +52,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const authRepo = createAuthRepo(opts.db);
   const sessionRepo = createSessionRepo(opts.db);
   const profileRepo = createProfileRepo(opts.db);
+  const friendsRepo = createFriendsRepo(opts.db);
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
   const passwordService = createPasswordService({ authRepo, sessionRepo });
@@ -75,6 +79,17 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
     }
   });
 
+  // Cada usuario conectado se une a su room privada para notificaciones dirigidas.
+  io.on("connection", (socket) => {
+    const user = socket.data.user;
+    if (user) socket.join(`user:${user.id}`);
+  });
+
+  const notify: Notify = (userId, event, payload) => {
+    io.to(`user:${userId}`).emit(event, payload);
+  };
+  const friendsService = createFriendsService({ repo: friendsRepo, notify });
+
   app.decorate("io", io);
   app.addHook("onClose", async () => {
     await io.close();
@@ -96,6 +111,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(sessionRoutes, { sessionService });
   await app.register(passwordRoutes, { passwordService });
   await app.register(profileRoutes, { profileService, sessionService });
+  await app.register(friendsRoutes, { friendsService, sessionService });
 
   return app;
 }
