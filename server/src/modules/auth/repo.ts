@@ -63,10 +63,14 @@ export function createAuthRepo(db: PGlite) {
       await db.query("UPDATE users SET is_verified = TRUE WHERE id = $1", [userId]);
     },
 
-    async invalidateActiveCodes(userId: string): Promise<void> {
+    async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
+      await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [passwordHash, userId]);
+    },
+
+    async invalidateActiveCodes(userId: string, purpose = "email_verify"): Promise<void> {
       await db.query(
-        "UPDATE email_verification_codes SET consumed_at = now() WHERE user_id = $1 AND consumed_at IS NULL",
-        [userId]
+        "UPDATE verification_codes SET consumed_at = now() WHERE user_id = $1 AND purpose = $2 AND consumed_at IS NULL",
+        [userId, purpose]
       );
     },
 
@@ -74,35 +78,36 @@ export function createAuthRepo(db: PGlite) {
       userId: string;
       codeHash: string;
       expiresAt: Date;
+      purpose?: string;
     }): Promise<void> {
       await db.query(
-        `INSERT INTO email_verification_codes (user_id, code_hash, expires_at)
-         VALUES ($1, $2, $3)`,
-        [input.userId, input.codeHash, input.expiresAt.toISOString()]
+        `INSERT INTO verification_codes (user_id, code_hash, expires_at, purpose)
+         VALUES ($1, $2, $3, $4)`,
+        [input.userId, input.codeHash, input.expiresAt.toISOString(), input.purpose ?? "email_verify"]
       );
     },
 
-    async findActiveCode(userId: string): Promise<CodeRow | null> {
+    async findActiveCode(userId: string, purpose = "email_verify"): Promise<CodeRow | null> {
       const r = await db.query<CodeRow>(
         `SELECT id, code_hash, expires_at, attempts
-         FROM email_verification_codes
-         WHERE user_id = $1 AND consumed_at IS NULL
+         FROM verification_codes
+         WHERE user_id = $1 AND purpose = $2 AND consumed_at IS NULL
          ORDER BY created_at DESC LIMIT 1`,
-        [userId]
+        [userId, purpose]
       );
       return r.rows[0] ?? null;
     },
 
     async incrementAttempts(codeId: string): Promise<void> {
       await db.query(
-        "UPDATE email_verification_codes SET attempts = attempts + 1 WHERE id = $1",
+        "UPDATE verification_codes SET attempts = attempts + 1 WHERE id = $1",
         [codeId]
       );
     },
 
     async consumeCode(codeId: string): Promise<void> {
       await db.query(
-        "UPDATE email_verification_codes SET consumed_at = now() WHERE id = $1",
+        "UPDATE verification_codes SET consumed_at = now() WHERE id = $1",
         [codeId]
       );
     },

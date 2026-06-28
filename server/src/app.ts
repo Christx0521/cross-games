@@ -11,6 +11,8 @@ import { authRoutes } from "./modules/auth/routes.ts";
 import { createSessionRepo, type SessionUser } from "./modules/auth/session.repo.ts";
 import { createSessionService } from "./modules/auth/session.service.ts";
 import { sessionRoutes } from "./modules/auth/session.routes.ts";
+import { createPasswordService } from "./modules/auth/password.service.ts";
+import { passwordRoutes } from "./modules/auth/password.routes.ts";
 import { SESSION_COOKIE } from "./modules/auth/session.guard.ts";
 
 declare module "fastify" {
@@ -35,6 +37,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const sessionRepo = createSessionRepo(opts.db);
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
+  const passwordService = createPasswordService({ authRepo, sessionRepo });
 
   const io = new IOServer(app.server, {
     cors: { origin: env.WEB_ORIGIN, credentials: true },
@@ -76,6 +79,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
 
   await app.register(authRoutes, { service: authService });
   await app.register(sessionRoutes, { sessionService });
+  await app.register(passwordRoutes, { passwordService });
 
   return app;
 }
