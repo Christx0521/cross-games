@@ -43,4 +43,7 @@ cd server; npm test
   - `POST /auth/login` (nickname o email), `POST /auth/logout`, `GET /auth/me`.
   - Cookie de sesión httpOnly firmada (SameSite=Lax), store en DB (tabla `sessions`, TTL 7 días).
   - Socket.IO valida la sesión en el handshake (`socket.data.user`).
-- Próximos: M3 (reset password), M4 (perfil), M5 (amigos), M6 (chat), M7 (grupos), M8 (foros).
+- **M3 — Reset de password: completo.**
+  - `POST /auth/forgot-password`, `POST /auth/reset-password`.
+  - Código por email (purpose `password_reset`); el reset invalida todas las sesiones del usuario.
+- Próximos: M4 (perfil), M5 (amigos), M6 (chat), M7 (grupos), M8 (foros).

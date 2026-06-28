@@ -9,7 +9,13 @@ const MESSAGES: Record<string, string> = {
   invalid_request: "Revisa los datos del formulario.",
 };
 
-export function Login({ onGoRegister }: { onGoRegister: () => void }) {
+export function Login({
+  onGoRegister,
+  onGoForgot,
+}: {
+  onGoRegister: () => void;
+  onGoForgot: () => void;
+}) {
   const { login } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +58,9 @@ export function Login({ onGoRegister }: { onGoRegister: () => void }) {
       </form>
       <button onClick={onGoRegister} className="mt-4 w-full text-sm text-[var(--color-purple)] hover:underline">
         ¿No tienes cuenta? Regístrate
+      </button>
+      <button onClick={onGoForgot} className="mt-2 w-full text-sm text-[var(--color-comment)] hover:underline">
+        ¿Olvidaste tu contraseña?
       </button>
     </Card>
   );

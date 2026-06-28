@@ -3,9 +3,11 @@ import { AuthProvider, useAuth } from "./auth/AuthContext.tsx";
 import { Register } from "./pages/Register.tsx";
 import { VerifyEmail } from "./pages/VerifyEmail.tsx";
 import { Login } from "./pages/Login.tsx";
+import { ForgotPassword } from "./pages/ForgotPassword.tsx";
+import { ResetPassword } from "./pages/ResetPassword.tsx";
 import { Card, Button } from "./components/ui.tsx";
 
-type View = "login" | "register" | "verify";
+type View = "login" | "register" | "verify" | "forgot" | "reset";
 
 function Home() {
   const { user, logout } = useAuth();
@@ -39,7 +41,23 @@ function Gate() {
   if (view === "verify") {
     return <VerifyEmail email={email} onVerified={() => setView("login")} />;
   }
-  return <Login onGoRegister={() => setView("register")} />;
+  if (view === "forgot") {
+    return (
+      <ForgotPassword
+        onSent={(e) => { setEmail(e); setView("reset"); }}
+        onBack={() => setView("login")}
+      />
+    );
+  }
+  if (view === "reset") {
+    return <ResetPassword email={email} onReset={() => setView("login")} />;
+  }
+  return (
+    <Login
+      onGoRegister={() => setView("register")}
+      onGoForgot={() => setView("forgot")}
+    />
+  );
 }
 
 export function App() {
