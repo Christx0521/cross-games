@@ -4,7 +4,6 @@ import { PGlite } from "@electric-sql/pglite";
 import { runMigrations } from "../../db/migrate.ts";
 import { createAuthRepo } from "../auth/repo.ts";
 import { createAuthService } from "../auth/service.ts";
-import { hashCode } from "../../lib/code.ts";
 import { buildApp } from "../../app.ts";
 
 const creds = { nickname: "neo", email: "neo@x.io", password: "S3cret!1", birthYear: 1990 };
@@ -15,14 +14,6 @@ async function appWithLogin() {
   const repo = createAuthRepo(db);
   const service = createAuthService({ repo });
   await service.register(creds);
-  const user = await repo.findUserByEmail(creds.email);
-  await repo.invalidateActiveCodes(user!.id);
-  await repo.insertCode({
-    userId: user!.id,
-    codeHash: hashCode("1234567", creds.email),
-    expiresAt: new Date(Date.now() + 60000),
-  });
-  await service.verifyEmail({ email: creds.email, code: "1234567" });
   const app = await buildApp({ db });
   const login = await app.inject({
     method: "POST", url: "/auth/login",

@@ -16,13 +16,6 @@ async function appWithVerifiedUser() {
   const service = createAuthService({ repo });
   await service.register(creds);
   const user = await repo.findUserByEmail(creds.email);
-  await repo.invalidateActiveCodes(user!.id);
-  await repo.insertCode({
-    userId: user!.id,
-    codeHash: hashCode("1234567", creds.email),
-    expiresAt: new Date(Date.now() + 60000),
-  });
-  await service.verifyEmail({ email: creds.email, code: "1234567" });
   // Sembrar un código de reset conocido.
   await repo.insertCode({
     userId: user!.id,

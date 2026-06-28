@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api.ts";
+import { useAuth } from "../auth/AuthContext.tsx";
 import { Card, Field, Button, Alert } from "../components/ui.tsx";
 
 const MESSAGES: Record<string, string> = {
@@ -9,7 +10,8 @@ const MESSAGES: Record<string, string> = {
   invalid_request: "Revisa los datos del formulario.",
 };
 
-export function Register({ onRegistered }: { onRegistered: (email: string) => void }) {
+export function Register({ onGoLogin }: { onGoLogin: () => void }) {
+  const { login } = useAuth();
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,8 @@ export function Register({ onRegistered }: { onRegistered: (email: string) => vo
         password,
         birthYear: Number(birthYear),
       });
-      onRegistered(email);
+      // Sin verificación por email: entramos directo tras crear la cuenta.
+      await login(email, password);
     } catch (err) {
       const code = err instanceof ApiError ? err.code : "error";
       setError(MESSAGES[code] ?? "Error inesperado.");
@@ -48,6 +51,9 @@ export function Register({ onRegistered }: { onRegistered: (email: string) => vo
         <Field label="Año de nacimiento" type="number" value={birthYear} onChange={(e) => setBirthYear(e.target.value)} required />
         <Button type="submit" disabled={loading}>{loading ? "Creando…" : "Registrarme"}</Button>
       </form>
+      <button onClick={onGoLogin} className="mt-4 w-full text-sm text-[var(--color-purple)] hover:underline">
+        ¿Ya tienes cuenta? Inicia sesión
+      </button>
     </Card>
   );
 }

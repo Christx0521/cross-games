@@ -6,7 +6,6 @@ import { createAuthRepo } from "./repo.ts";
 import { createSessionRepo } from "./session.repo.ts";
 import { createAuthService } from "./service.ts";
 import { createSessionService } from "./session.service.ts";
-import { hashCode } from "../../lib/code.ts";
 import { AppError } from "../../lib/errors.ts";
 
 const creds = { nickname: "neo", email: "neo@x.io", password: "S3cret!1", birthYear: 1990 };
@@ -23,14 +22,6 @@ async function setup() {
 
 async function registerAndVerify(s: Awaited<ReturnType<typeof setup>>) {
   await s.authService.register(creds);
-  const user = await s.authRepo.findUserByEmail(creds.email);
-  await s.authRepo.invalidateActiveCodes(user!.id);
-  await s.authRepo.insertCode({
-    userId: user!.id,
-    codeHash: hashCode("1234567", creds.email),
-    expiresAt: new Date(Date.now() + 60000),
-  });
-  await s.authService.verifyEmail({ email: creds.email, code: "1234567" });
 }
 
 test("login con email verificado devuelve sessionId y user", async () => {
@@ -55,15 +46,6 @@ test("login con password incorrecta → 401 invalid_credentials", async () => {
   await assert.rejects(
     s.sessionService.login({ identifier: creds.email, password: "wrong-pass" }),
     (e: AppError) => e.statusCode === 401 && e.code === "invalid_credentials"
-  );
-});
-
-test("login de usuario no verificado → 403 email_not_verified", async () => {
-  const s = await setup();
-  await s.authService.register(creds); // sin verificar
-  await assert.rejects(
-    s.sessionService.login({ identifier: creds.email, password: creds.password }),
-    (e: AppError) => e.statusCode === 403 && e.code === "email_not_verified"
   );
 });
 

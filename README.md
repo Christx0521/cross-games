@@ -36,8 +36,8 @@ cd server; npm test
 
 ## Estado
 
-- **M1 — Auth (registro + verificación de email): completo.**
-  - `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-code`, `GET /health`.
+- **M1 — Auth (registro): completo.**
+  - `POST /auth/register` (sin verificación por email: la cuenta queda lista al instante), `GET /health`.
   - IDs UUID, password argon2id, código de 7 dígitos (HMAC-SHA256, TTL 15 min, máx 5 intentos).
 - **M2 — Login + sesión: completo.**
   - `POST /auth/login` (nickname o email), `POST /auth/logout`, `GET /auth/me`.

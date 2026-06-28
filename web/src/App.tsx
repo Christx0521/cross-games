@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext.tsx";
 import { Register } from "./pages/Register.tsx";
-import { VerifyEmail } from "./pages/VerifyEmail.tsx";
 import { Login } from "./pages/Login.tsx";
 import { ForgotPassword } from "./pages/ForgotPassword.tsx";
 import { ResetPassword } from "./pages/ResetPassword.tsx";
@@ -13,7 +12,7 @@ import { Forums } from "./pages/Forums.tsx";
 import { ChatView } from "./pages/ChatView.tsx";
 import { Card, Button } from "./components/ui.tsx";
 
-type View = "login" | "register" | "verify" | "forgot" | "reset";
+type View = "login" | "register" | "forgot" | "reset";
 type HomeView = "home" | "profile" | "edit" | "friends" | "groups" | "forums" | "chat";
 
 export interface OpenChat {
@@ -100,10 +99,7 @@ function Gate() {
   if (user) return <Home />;
 
   if (view === "register") {
-    return <Register onRegistered={(e) => { setEmail(e); setView("verify"); }} />;
-  }
-  if (view === "verify") {
-    return <VerifyEmail email={email} onVerified={() => setView("login")} />;
+    return <Register onGoLogin={() => setView("login")} />;
   }
   if (view === "forgot") {
     return (

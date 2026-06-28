@@ -8,7 +8,22 @@
       "Bash(git init *)",
       "Bash(mkdir -p docs/superpowers/specs)",
       "Bash(git add *)",
-      "Bash(git commit -q -m ' *)"
+      "Bash(git commit -q -m ' *)",
+      "PowerShell(cd \"c:\\\\PROYECTO CROSS GAME\\\\server\"; $p = Start-Process npm -ArgumentList \"run\",\"start\" -PassThru -RedirectStandardOutput server.out.log -RedirectStandardError server.err.log -NoNewWindow; Start-Sleep -Seconds 8; try { $r = Invoke-RestMethod -Uri \"http://localhost:3000/auth/register\" -Method Post -ContentType \"application/json\" -Body '{\"nickname\":\"smoke\",\"email\":\"smoke@x.io\",\"password\":\"S3cret!1\",\"birthYear\":1990}'; \"REGISTER: $\\($r | ConvertTo-Json -Compress\\)\"; $h = Invoke-RestMethod -Uri \"http://localhost:3000/health\"; \"HEALTH: $\\($h | ConvertTo-Json -Compress\\)\" } catch { \"ERROR: $_\" } finally { Stop-Process -Id $p.Id -Force }; \"---LOG---\"; Get-Content server.out.log -ErrorAction SilentlyContinue)",
+      "Bash(netstat -ano)",
+      "Bash(grep -q \"escuchando\" server.out.log)",
+      "Bash(break)",
+      "Bash(git commit -q -m 'docs: README con instrucciones de arranque *)",
+      "mcp__github__create_repository",
+      "Bash(git credential *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git ls-remote *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/health)",
+      "Bash(curl -s -i -X OPTIONS http://localhost:3000/auth/login -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: POST\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://localhost:3000/auth/login -H \"Origin: http://localhost:5173\" -H \"Content-Type: application/json\" -d '{\"identifier\":\"nadie\",\"password\":\"xxxxxxxx\"}')",
+      "Bash(curl -s -i -X OPTIONS http://localhost:3000/me/profile -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: PATCH\")",
+      "Bash(curl -s -i -X OPTIONS http://localhost:3000/auth/login -H \"Origin: http://localhost:5174\" -H \"Access-Control-Request-Method: POST\")"
     ]
   }
 }

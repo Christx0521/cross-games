@@ -51,14 +51,6 @@ test("POST /auth/register payload inválido → 400 invalid_request", async () =
   await app.close();
 });
 
-test("POST /auth/resend-code email inexistente → 200 {sent:true}", async () => {
-  const app = await appWithDb();
-  const res = await app.inject({ method: "POST", url: "/auth/resend-code", payload: { email: "no@x.io" } });
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.json().sent, true);
-  await app.close();
-});
-
 test("GET /health → ok", async () => {
   const app = await appWithDb();
   const res = await app.inject({ method: "GET", url: "/health" });

@@ -4,7 +4,6 @@ import { PGlite } from "@electric-sql/pglite";
 import { runMigrations } from "../../db/migrate.ts";
 import { createAuthRepo } from "./repo.ts";
 import { createAuthService } from "./service.ts";
-import { hashCode } from "../../lib/code.ts";
 import { buildApp } from "../../app.ts";
 
 const creds = { nickname: "neo", email: "neo@x.io", password: "S3cret!1", birthYear: 1990 };
@@ -12,18 +11,9 @@ const creds = { nickname: "neo", email: "neo@x.io", password: "S3cret!1", birthY
 async function appWithVerifiedUser() {
   const db = new PGlite();
   await runMigrations(db);
-  // Crear y verificar un usuario directamente con un código conocido.
   const repo = createAuthRepo(db);
   const service = createAuthService({ repo });
   await service.register(creds);
-  const user = await repo.findUserByEmail(creds.email);
-  await repo.invalidateActiveCodes(user!.id);
-  await repo.insertCode({
-    userId: user!.id,
-    codeHash: hashCode("1234567", creds.email),
-    expiresAt: new Date(Date.now() + 60000),
-  });
-  await service.verifyEmail({ email: creds.email, code: "1234567" });
   return buildApp({ db });
 }
 

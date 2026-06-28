@@ -24,8 +24,6 @@ export function createSessionService(deps: {
       const ok = await verifyPassword(user.password_hash, input.password);
       if (!ok) throw new AppError(401, "invalid_credentials");
 
-      if (!user.is_verified) throw new AppError(403, "email_not_verified");
-
       const expiresAt = new Date(now().getTime() + SESSION_TTL_MS);
       const sessionId = await sessionRepo.createSession(user.id, expiresAt);
       return {

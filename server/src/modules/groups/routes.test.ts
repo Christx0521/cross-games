@@ -4,17 +4,12 @@ import { PGlite } from "@electric-sql/pglite";
 import { runMigrations } from "../../db/migrate.ts";
 import { createAuthRepo } from "../auth/repo.ts";
 import { createAuthService } from "../auth/service.ts";
-import { hashCode } from "../../lib/code.ts";
 import { buildApp } from "../../app.ts";
 import type { FastifyInstance } from "fastify";
 
 async function makeUser(app: FastifyInstance, repo: ReturnType<typeof createAuthRepo>, service: ReturnType<typeof createAuthService>, nickname: string) {
   const email = `${nickname}@x.io`;
   await service.register({ nickname, email, password: "S3cret!1", birthYear: 1990 });
-  const user = await repo.findUserByEmail(email);
-  await repo.invalidateActiveCodes(user!.id);
-  await repo.insertCode({ userId: user!.id, codeHash: hashCode("1234567", email), expiresAt: new Date(Date.now() + 60000) });
-  await service.verifyEmail({ email, code: "1234567" });
   const login = await app.inject({ method: "POST", url: "/auth/login", payload: { identifier: nickname, password: "S3cret!1" } });
   return `sid=${login.cookies.find((c) => c.name === "sid")!.value}`;
 }

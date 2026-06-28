@@ -26,15 +26,7 @@ async function setup() {
 
 async function registerAndVerify(s: Awaited<ReturnType<typeof setup>>) {
   await s.authService.register(creds);
-  const user = await s.authRepo.findUserByEmail(creds.email);
-  await s.authRepo.invalidateActiveCodes(user!.id);
-  await s.authRepo.insertCode({
-    userId: user!.id,
-    codeHash: hashCode("1234567", creds.email),
-    expiresAt: new Date(Date.now() + 60000),
-  });
-  await s.authService.verifyEmail({ email: creds.email, code: "1234567" });
-  return user!;
+  return (await s.authRepo.findUserByEmail(creds.email))!;
 }
 
 // Inserta un código de reset conocido y devuelve su texto.
