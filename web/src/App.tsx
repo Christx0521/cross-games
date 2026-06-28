@@ -7,10 +7,11 @@ import { ForgotPassword } from "./pages/ForgotPassword.tsx";
 import { ResetPassword } from "./pages/ResetPassword.tsx";
 import { Profile } from "./pages/Profile.tsx";
 import { EditProfile } from "./pages/EditProfile.tsx";
+import { Friends } from "./pages/Friends.tsx";
 import { Card, Button } from "./components/ui.tsx";
 
 type View = "login" | "register" | "verify" | "forgot" | "reset";
-type HomeView = "home" | "profile" | "edit";
+type HomeView = "home" | "profile" | "edit" | "friends";
 
 function Home() {
   const { user, logout } = useAuth();
@@ -22,6 +23,9 @@ function Home() {
   if (view === "edit") {
     return <EditProfile onBack={() => setView("home")} />;
   }
+  if (view === "friends") {
+    return <Friends onBack={() => setView("home")} />;
+  }
 
   return (
     <Card>
@@ -30,6 +34,7 @@ function Home() {
       <div className="flex flex-col gap-3">
         <Button onClick={() => setView("profile")}>Ver mi perfil</Button>
         <Button onClick={() => setView("edit")}>Editar perfil</Button>
+        <Button onClick={() => setView("friends")}>Amigos</Button>
         <button onClick={() => void logout()} className="w-full text-sm text-[var(--color-comment)] hover:underline">
           Cerrar sesión
         </button>

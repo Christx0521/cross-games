@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, ApiError } from "../lib/api.ts";
+import { disconnectSocket } from "../lib/socket.ts";
 
 export interface User {
   id: string;
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout(): Promise<void> {
     await api.post("/auth/logout", {});
+    disconnectSocket();
     setUser(null);
   }
 

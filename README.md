@@ -49,4 +49,7 @@ cd server; npm test
 - **M4 — Perfil de usuario: completo.**
   - `GET /users/:nickname` (público, sin datos sensibles, `is_adult`), `PATCH /me/profile`, `POST /me/avatar`.
   - Avatar en disco tras interfaz `Storage` (PNG/JPEG/WebP, ≤2 MB); país (ISO) e idiomas.
-- Próximos: M5 (amigos), M6 (chat), M7 (grupos), M8 (foros).
+- **M5 — Amigos: completo.**
+  - `POST /friends/request`, `POST /friends/:id/accept`, `POST /friends/:id/reject`, `GET /friends`, `GET /friends/requests`.
+  - Pares bidireccionales (auto-acepta inversa); notificación en vivo por Socket.IO (rooms `user:<id>`).
+- Próximos: M6 (chat), M7 (grupos), M8 (foros).
