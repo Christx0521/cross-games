@@ -33,7 +33,12 @@ function Avatar({ url, nickname }: { url: string | null; nickname: string }) {
   );
 }
 
-export function Friends({ onBack, onOpenChat }: { onBack: () => void; onOpenChat: (nickname: string) => void }) {
+interface OpenChat {
+  conversationId: string;
+  title: string;
+}
+
+export function Friends({ onBack, onOpenChat }: { onBack: () => void; onOpenChat: (chat: OpenChat) => void }) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [nickname, setNickname] = useState("");
@@ -85,6 +90,11 @@ export function Friends({ onBack, onOpenChat }: { onBack: () => void; onOpenChat
     await load();
   }
 
+  async function chat(nickname: string) {
+    const { conversationId } = await api.post<{ conversationId: string }>("/conversations/dm", { nickname });
+    onOpenChat({ conversationId, title: nickname });
+  }
+
   return (
     <Card>
       <h1 className="text-2xl font-bold mb-6 text-[var(--color-pink)]">Amigos</h1>
@@ -125,7 +135,7 @@ export function Friends({ onBack, onOpenChat }: { onBack: () => void; onOpenChat
             <div key={f.id} className="flex items-center gap-3 mb-2">
               <Avatar url={f.avatar_url} nickname={f.nickname} />
               <span className="flex-1 text-[var(--color-text)]">{f.nickname}</span>
-              <button onClick={() => onOpenChat(f.nickname)} className="text-sm text-[var(--color-purple)] hover:underline">
+              <button onClick={() => void chat(f.nickname)} className="text-sm text-[var(--color-purple)] hover:underline">
                 Chatear
               </button>
             </div>

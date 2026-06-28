@@ -5,9 +5,8 @@ import { type Message, type HistoryPage } from "../lib/chat.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { Card, Button, Alert } from "../components/ui.tsx";
 
-export function ChatView({ withNickname, onBack }: { withNickname: string; onBack: () => void }) {
+export function ChatView({ conversationId, title, onBack }: { conversationId: string; title: string; onBack: () => void }) {
   const { user } = useAuth();
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -29,15 +28,12 @@ export function ChatView({ withNickname, onBack }: { withNickname: string; onBac
     });
   }, []);
 
-  // Crear/obtener la conversación DM y cargar la primera página.
+  // Cargar la primera página del historial de la conversación.
   useEffect(() => {
     let active = true;
     api
-      .post<{ conversationId: string }>("/conversations/dm", { nickname: withNickname })
-      .then(async ({ conversationId: id }) => {
-        if (!active) return;
-        setConversationId(id);
-        const page = await api.get<HistoryPage>(`/conversations/${id}/messages?limit=30`);
+      .get<HistoryPage>(`/conversations/${conversationId}/messages?limit=30`)
+      .then((page) => {
         if (!active) return;
         setMessages(page.messages);
         setCursor(page.nextCursor);
@@ -50,11 +46,10 @@ export function ChatView({ withNickname, onBack }: { withNickname: string; onBac
     return () => {
       active = false;
     };
-  }, [withNickname]);
+  }, [conversationId]);
 
   // Suscripción a mensajes nuevos y typing.
   useEffect(() => {
-    if (!conversationId) return;
     const socket = getSocket();
     const onNew = (msg: Message) => {
       if (msg.conversation_id === conversationId) mergeMessage(msg);
@@ -123,7 +118,7 @@ export function ChatView({ withNickname, onBack }: { withNickname: string; onBac
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-[var(--color-pink)]">{withNickname}</h1>
+        <h1 className="text-xl font-bold text-[var(--color-pink)]">{title}</h1>
         <button onClick={onBack} className="text-sm text-[var(--color-comment)] hover:underline">Volver</button>
       </div>
       {error && <Alert kind="error">{error}</Alert>}

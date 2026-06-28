@@ -8,16 +8,29 @@ import { ResetPassword } from "./pages/ResetPassword.tsx";
 import { Profile } from "./pages/Profile.tsx";
 import { EditProfile } from "./pages/EditProfile.tsx";
 import { Friends } from "./pages/Friends.tsx";
+import { Groups } from "./pages/Groups.tsx";
 import { ChatView } from "./pages/ChatView.tsx";
 import { Card, Button } from "./components/ui.tsx";
 
 type View = "login" | "register" | "verify" | "forgot" | "reset";
-type HomeView = "home" | "profile" | "edit" | "friends" | "chat";
+type HomeView = "home" | "profile" | "edit" | "friends" | "groups" | "chat";
+
+export interface OpenChat {
+  conversationId: string;
+  title: string;
+}
 
 function Home() {
   const { user, logout } = useAuth();
   const [view, setView] = useState<HomeView>("home");
-  const [chatWith, setChatWith] = useState("");
+  const [chat, setChat] = useState<OpenChat | null>(null);
+  const [chatOrigin, setChatOrigin] = useState<HomeView>("friends");
+
+  function openChat(c: OpenChat, origin: HomeView) {
+    setChat(c);
+    setChatOrigin(origin);
+    setView("chat");
+  }
 
   if (view === "profile" && user) {
     return <Profile nickname={user.nickname} onBack={() => setView("home")} />;
@@ -26,15 +39,13 @@ function Home() {
     return <EditProfile onBack={() => setView("home")} />;
   }
   if (view === "friends") {
-    return (
-      <Friends
-        onBack={() => setView("home")}
-        onOpenChat={(nickname) => { setChatWith(nickname); setView("chat"); }}
-      />
-    );
+    return <Friends onBack={() => setView("home")} onOpenChat={(c) => openChat(c, "friends")} />;
   }
-  if (view === "chat") {
-    return <ChatView withNickname={chatWith} onBack={() => setView("friends")} />;
+  if (view === "groups") {
+    return <Groups onBack={() => setView("home")} onOpenChat={(c) => openChat(c, "groups")} />;
+  }
+  if (view === "chat" && chat) {
+    return <ChatView conversationId={chat.conversationId} title={chat.title} onBack={() => setView(chatOrigin)} />;
   }
 
   return (
@@ -45,6 +56,7 @@ function Home() {
         <Button onClick={() => setView("profile")}>Ver mi perfil</Button>
         <Button onClick={() => setView("edit")}>Editar perfil</Button>
         <Button onClick={() => setView("friends")}>Amigos</Button>
+        <Button onClick={() => setView("groups")}>Grupos</Button>
         <button onClick={() => void logout()} className="w-full text-sm text-[var(--color-comment)] hover:underline">
           Cerrar sesión
         </button>

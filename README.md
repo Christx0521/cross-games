@@ -55,4 +55,7 @@ cd server; npm test
 - **M6 — Motor de chat (DM): completo.**
   - `POST /conversations/dm`, `GET /conversations/:id/messages` (paginación keyset por `seq`).
   - Socket `message:send` valida membresía y emite `message:new`; `typing`. ChatView con scroll infinito y envío optimista.
-- Próximos: M7 (grupos), M8 (foros).
+- **M7 — Grupos privados: completo.**
+  - `POST /groups`, `POST /groups/:id/members`, `DELETE /groups/:id/members/:userId`, `GET /groups`.
+  - type=group (reutiliza el motor); solo admin gestiona; tope 20. ChatView unificado (DM/grupo/foro).
+- Próximos: M8 (foros).
