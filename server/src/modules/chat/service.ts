@@ -20,6 +20,25 @@ export function createChatService(deps: { repo: ChatRepo }) {
     }
   }
 
+  async function page(
+    conversationId: string,
+    beforeRaw: string | undefined,
+    limitRaw: number | undefined
+  ): Promise<HistoryPage> {
+    const limit = Math.min(Math.max(limitRaw ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
+    let beforeSeq: number | null = null;
+    if (beforeRaw) {
+      beforeSeq = decodeCursor(beforeRaw);
+      if (beforeSeq === null) throw new AppError(400, "invalid_cursor");
+    }
+    const rows = await repo.listMessages(conversationId, beforeSeq, limit + 1);
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const last = pageRows.at(-1);
+    const nextCursor = hasMore && last ? encodeCursor(last.seq) : null;
+    return { messages: pageRows.slice().reverse(), nextCursor };
+  }
+
   return {
     async getOrCreateDm(userId: string, nickname: string): Promise<{ conversationId: string }> {
       const target = await repo.findUserByNickname(nickname);
@@ -35,6 +54,7 @@ export function createChatService(deps: { repo: ChatRepo }) {
       return { conversationId };
     },
 
+    // Historial para DM/grupo: exige membresía.
     async getHistory(
       userId: string,
       conversationId: string,
@@ -42,30 +62,35 @@ export function createChatService(deps: { repo: ChatRepo }) {
       limitRaw: number | undefined
     ): Promise<HistoryPage> {
       await ensureMember(conversationId, userId);
+      return page(conversationId, beforeRaw, limitRaw);
+    },
 
-      const limit = Math.min(Math.max(limitRaw ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
-      let beforeSeq: number | null = null;
-      if (beforeRaw) {
-        beforeSeq = decodeCursor(beforeRaw);
-        if (beforeSeq === null) throw new AppError(400, "invalid_cursor");
-      }
-
-      const rows = await repo.listMessages(conversationId, beforeSeq, limit + 1);
-      const hasMore = rows.length > limit;
-      const page = hasMore ? rows.slice(0, limit) : rows;
-      const last = page.at(-1);
-      const nextCursor = hasMore && last ? encodeCursor(last.seq) : null;
-
-      // Se devuelve en orden ascendente (más antiguo primero) para pintar de arriba a abajo.
-      return { messages: page.slice().reverse(), nextCursor };
+    // Historial de foro: lectura pública, solo valida que sea un foro.
+    async getForumHistory(
+      conversationId: string,
+      beforeRaw: string | undefined,
+      limitRaw: number | undefined
+    ): Promise<HistoryPage> {
+      const type = await repo.getConversationType(conversationId);
+      if (type !== "forum") throw new AppError(404, "forum_not_found");
+      return page(conversationId, beforeRaw, limitRaw);
     },
 
     async postMessage(userId: string, conversationId: string, body: string): Promise<MessageRow> {
       const text = body.trim();
       if (!text) throw new AppError(400, "empty_message");
       if (text.length > MAX_BODY) throw new AppError(422, "message_too_long");
-      await ensureMember(conversationId, userId);
+
+      const type = await repo.getConversationType(conversationId);
+      if (!type) throw new AppError(404, "conversation_not_found");
+      // En foros cualquier usuario autenticado postea; en DM/grupo exige membresía.
+      if (type !== "forum") await ensureMember(conversationId, userId);
+
       return repo.insertMessage(conversationId, userId, text);
+    },
+
+    getConversationType(conversationId: string): Promise<string | null> {
+      return repo.getConversationType(conversationId);
     },
 
     getMemberIds(conversationId: string): Promise<string[]> {

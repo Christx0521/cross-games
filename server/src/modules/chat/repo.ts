@@ -51,6 +51,14 @@ export function createChatRepo(db: PGlite) {
       );
     },
 
+    async getConversationType(conversationId: string): Promise<string | null> {
+      const r = await db.query<{ type: string }>(
+        "SELECT type FROM conversations WHERE id = $1",
+        [conversationId]
+      );
+      return r.rows[0]?.type ?? null;
+    },
+
     async isMember(conversationId: string, userId: string): Promise<boolean> {
       const r = await db.query(
         "SELECT 1 FROM conversation_members WHERE conversation_id = $1 AND user_id = $2",
