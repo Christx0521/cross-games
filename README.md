@@ -11,6 +11,12 @@ Plataforma de chat para gamers. MVP en construcción módulo a módulo.
 
 - Node 24+
 
+## Arranque fácil (Windows)
+
+**Doble clic en `iniciar.bat`.** La primera vez instala dependencias y crea los `.env`;
+luego levanta backend (:3000) y frontend (:5173) en dos ventanas y abre el navegador
+solo en http://localhost:5173. Para detener: cierra las ventanas "Servidor" y "Web".
+
 ## Arranque local (sin Docker)
 
 ```powershell
