@@ -39,4 +39,8 @@ cd server; npm test
 - **M1 — Auth (registro + verificación de email): completo.**
   - `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-code`, `GET /health`.
   - IDs UUID, password argon2id, código de 7 dígitos (HMAC-SHA256, TTL 15 min, máx 5 intentos).
-- Próximos: M2 (login + sesión), M3 (reset password), M4 (perfil), M5 (amigos), M6 (chat), M7 (grupos), M8 (foros).
+- **M2 — Login + sesión: completo.**
+  - `POST /auth/login` (nickname o email), `POST /auth/logout`, `GET /auth/me`.
+  - Cookie de sesión httpOnly firmada (SameSite=Lax), store en DB (tabla `sessions`, TTL 7 días).
+  - Socket.IO valida la sesión en el handshake (`socket.data.user`).
+- Próximos: M3 (reset password), M4 (perfil), M5 (amigos), M6 (chat), M7 (grupos), M8 (foros).
