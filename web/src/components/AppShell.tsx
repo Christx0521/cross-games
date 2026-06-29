@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "../auth/AuthContext.tsx";
+import { useRealtime } from "../chat/RealtimeContext.tsx";
 import type { OpenChat } from "../lib/nav.ts";
 import { ChatList } from "./ChatList.tsx";
 import { ChatView } from "../pages/ChatView.tsx";
@@ -29,10 +30,23 @@ function Placeholder({ children }: { children: ReactNode }) {
 
 export function AppShell() {
   const { user, logout } = useAuth();
+  const { unread, markRead, setActiveConversation } = useRealtime();
   const [section, setSection] = useState<Section>("chats");
   const [chat, setChat] = useState<OpenChat | null>(null);
   const [chatsPanel, setChatsPanel] = useState<"chat" | "groups">("chat");
   const [profileMode, setProfileMode] = useState<"view" | "edit">("view");
+
+  const totalUnread = Object.values(unread).reduce((a, b) => a + b, 0);
+
+  // Al tener una conversación (no foro) abierta: marcarla activa y leída.
+  useEffect(() => {
+    if (chat && !chat.isForum) {
+      setActiveConversation(chat.conversationId);
+      void markRead(chat.conversationId);
+    } else {
+      setActiveConversation(null);
+    }
+  }, [chat, markRead, setActiveConversation]);
 
   function openChat(c: OpenChat) {
     setChat(c);
@@ -104,13 +118,18 @@ export function AppShell() {
             key={item.id}
             onClick={() => setSection(item.id)}
             title={item.label}
-            className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl transition-colors ${
+            className={`relative w-11 h-11 rounded-xl flex items-center justify-center text-xl transition-colors ${
               section === item.id
                 ? "bg-[var(--color-pink)]"
                 : "hover:bg-[var(--color-surface-2)]"
             }`}
           >
             {item.icon}
+            {item.id === "chats" && totalUnread > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full bg-[var(--color-magenta)] text-white text-xs font-bold flex items-center justify-center">
+                {totalUnread > 99 ? "99+" : totalUnread}
+              </span>
+            )}
           </button>
         ))}
         <button

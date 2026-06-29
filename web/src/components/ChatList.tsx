@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, API_BASE } from "../lib/api.ts";
 import { getSocket } from "../lib/socket.ts";
+import { useRealtime } from "../chat/RealtimeContext.tsx";
 import type { OpenChat } from "../lib/nav.ts";
 
 interface Friend {
@@ -14,12 +15,23 @@ interface Group {
   role: string;
 }
 
-function Avatar({ url, name }: { url: string | null; name: string }) {
-  return url ? (
-    <img src={`${API_BASE}${url}`} alt={name} className="w-10 h-10 rounded-full object-cover shrink-0" />
-  ) : (
-    <div className="w-10 h-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-[var(--color-pink)] font-semibold shrink-0">
-      {name.charAt(0).toUpperCase()}
+function Avatar({ url, name, online }: { url: string | null; name: string; online?: boolean }) {
+  return (
+    <div className="relative shrink-0">
+      {url ? (
+        <img src={`${API_BASE}${url}`} alt={name} className="w-10 h-10 rounded-full object-cover" />
+      ) : (
+        <div className="w-10 h-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-[var(--color-pink)] font-semibold">
+          {name.charAt(0).toUpperCase()}
+        </div>
+      )}
+      {online !== undefined && (
+        <span
+          className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--color-surface)] ${
+            online ? "bg-[var(--color-green)]" : "bg-[var(--color-muted)]"
+          }`}
+        />
+      )}
     </div>
   );
 }
@@ -33,6 +45,7 @@ export function ChatList({
   onOpenChat: (c: OpenChat) => void;
   onManageGroups: () => void;
 }) {
+  const { isOnline, unread } = useRealtime();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
 
@@ -88,6 +101,11 @@ export function ChatList({
               #
             </div>
             <span className="flex-1 truncate text-[var(--color-text)]">{g.name}</span>
+            {unread[g.id] > 0 && (
+              <span className="min-w-5 h-5 px-1 rounded-full bg-[var(--color-magenta)] text-white text-xs font-bold flex items-center justify-center">
+                {unread[g.id]}
+              </span>
+            )}
             {g.role === "admin" && <span className="text-xs text-[var(--color-muted)]">admin</span>}
           </button>
         ))}
@@ -100,7 +118,7 @@ export function ChatList({
         ) : (
           friends.map((f) => (
             <button key={f.id} onClick={() => void openDm(f.nickname)} className={rowBase}>
-              <Avatar url={f.avatar_url} name={f.nickname} />
+              <Avatar url={f.avatar_url} name={f.nickname} online={isOnline(f.id)} />
               <span className="flex-1 truncate text-[var(--color-text)]">{f.nickname}</span>
             </button>
           ))

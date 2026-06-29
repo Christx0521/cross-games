@@ -5,6 +5,7 @@ import { Login } from "./pages/Login.tsx";
 import { ForgotPassword } from "./pages/ForgotPassword.tsx";
 import { ResetPassword } from "./pages/ResetPassword.tsx";
 import { AppShell } from "./components/AppShell.tsx";
+import { RealtimeProvider } from "./chat/RealtimeContext.tsx";
 import { Card } from "./components/ui.tsx";
 
 type View = "login" | "register" | "forgot" | "reset";
@@ -22,7 +23,13 @@ function Gate() {
     );
   }
 
-  if (user) return <AppShell />;
+  if (user) {
+    return (
+      <RealtimeProvider>
+        <AppShell />
+      </RealtimeProvider>
+    );
+  }
 
   if (view === "register") {
     return <Register onGoLogin={() => setView("login")} />;
