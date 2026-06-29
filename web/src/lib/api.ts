@@ -53,6 +53,18 @@ export const api = {
     return data as T;
   },
 
+  async del<T>(path: string): Promise<T> {
+    const res = await fetch(`${BASE}${path}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      throw new ApiError(res.status, String(data.code ?? "error"), data.message as string);
+    }
+    return data as T;
+  },
+
   async upload<T>(path: string, form: FormData): Promise<T> {
     const res = await fetch(`${BASE}${path}`, {
       method: "POST",

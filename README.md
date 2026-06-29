@@ -72,4 +72,9 @@ cd server; npm test
   - `GET /forums/:id/threads?sort=`, `POST /forums/:id/threads`, `GET /threads/:id`, `GET/POST /threads/:id/comments`, `POST /threads/:id/vote`, `POST /comments/:id/vote`.
   - Búsqueda global `GET /search?q=` (foros por nombre + usuarios por nickname). Lecturas públicas con sesión opcional (personaliza `my_vote`).
 
-**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)**. Próximo: M13 (feed/muro social) y extras (menciones, stories, perfil rico, moderación). M9 (juegos) más adelante.
+- **M13 — Feed / muro social: completo.**
+  - Publicaciones (texto y/o imagen), feed de amigos + propio con paginación keyset por `seq`, "me gusta" (toggle) y comentarios.
+  - `GET /feed`, `POST /posts`, `POST /posts/attachment` (multipart), `GET /users/:nickname/posts` (muro público), `DELETE /posts/:id` (autor), `POST /posts/:id/like`, `GET/POST /posts/:id/comments`.
+  - UI: sección **Inicio** con composer (texto + 📎 imagen), tarjetas de post con like/comentarios en vivo y muro embebido en el perfil.
+
+**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)** + **M13 (feed/muro social)**. Próximo: extras (menciones + notificaciones, stories efímeras, perfil rico con juegos, moderación bloquear/reportar). M9 (juegos) más adelante.

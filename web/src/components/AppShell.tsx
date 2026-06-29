@@ -7,12 +7,14 @@ import { ChatView } from "../pages/ChatView.tsx";
 import { Friends } from "../pages/Friends.tsx";
 import { Groups } from "../pages/Groups.tsx";
 import { Forums } from "../pages/Forums.tsx";
+import { Feed } from "../pages/Feed.tsx";
 import { Profile } from "../pages/Profile.tsx";
 import { EditProfile } from "../pages/EditProfile.tsx";
 
-type Section = "chats" | "friends" | "forums" | "profile";
+type Section = "feed" | "chats" | "friends" | "forums" | "profile";
 
 const NAV: Array<{ id: Section; icon: string; label: string }> = [
+  { id: "feed", icon: "🏠", label: "Inicio" },
   { id: "chats", icon: "💬", label: "Chats" },
   { id: "friends", icon: "👥", label: "Amigos" },
   { id: "forums", icon: "🌐", label: "Foros" },
@@ -31,7 +33,7 @@ function Placeholder({ children }: { children: ReactNode }) {
 export function AppShell() {
   const { user, logout } = useAuth();
   const { unread, markRead, setActiveConversation } = useRealtime();
-  const [section, setSection] = useState<Section>("chats");
+  const [section, setSection] = useState<Section>("feed");
   const [chat, setChat] = useState<OpenChat | null>(null);
   const [chatsPanel, setChatsPanel] = useState<"chat" | "groups">("chat");
   const [profileMode, setProfileMode] = useState<"view" | "edit">("view");
@@ -68,6 +70,9 @@ export function AppShell() {
   }
 
   function renderPanel(): ReactNode {
+    if (section === "feed") {
+      return <Feed />;
+    }
     if (section === "chats") {
       if (chatsPanel === "groups") return <Groups onOpenChat={openChat} />;
       if (chat && !chat.isForum) {

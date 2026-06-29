@@ -30,6 +30,9 @@ import { createThreadsService } from "./modules/threads/service.ts";
 import { threadsRoutes } from "./modules/threads/routes.ts";
 import { createSearchRepo } from "./modules/search/repo.ts";
 import { searchRoutes } from "./modules/search/routes.ts";
+import { createFeedRepo } from "./modules/feed/repo.ts";
+import { createFeedService } from "./modules/feed/service.ts";
+import { feedRoutes } from "./modules/feed/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -93,6 +96,8 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const threadsRepo = createThreadsRepo(opts.db);
   const threadsService = createThreadsService({ repo: threadsRepo, forumsRepo });
   const searchRepo = createSearchRepo(opts.db);
+  const feedRepo = createFeedRepo(opts.db);
+  const feedService = createFeedService({ repo: feedRepo, friendsRepo });
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
   const passwordService = createPasswordService({ authRepo, sessionRepo });
@@ -257,6 +262,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(forumsRoutes, { forumsService, chatService, sessionService });
   await app.register(threadsRoutes, { threadsService, sessionService });
   await app.register(searchRoutes, { searchRepo });
+  await app.register(feedRoutes, { feedService, sessionService, storage });
 
   return app;
 }

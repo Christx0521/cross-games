@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { api, API_BASE, ApiError } from "../lib/api.ts";
 import { type PublicProfile, flagEmoji } from "../lib/profile.ts";
+import { type Post, type PostsPage } from "../lib/feed.ts";
+import { PostCard } from "../components/PostCard.tsx";
 import { Button, Alert } from "../components/ui.tsx";
 
 export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () => void }) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -12,6 +15,10 @@ export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () =>
       .get<PublicProfile>(`/users/${nickname}`)
       .then(setProfile)
       .catch((err) => setError(err instanceof ApiError ? "Perfil no encontrado." : "Error inesperado."));
+    api
+      .get<PostsPage>(`/users/${nickname}/posts?limit=20`)
+      .then((page) => setPosts(page.posts))
+      .catch(() => setPosts([]));
   }, [nickname]);
 
   if (error) {
@@ -74,6 +81,19 @@ export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () =>
           <Button onClick={onEdit}>Editar perfil</Button>
         </div>
       )}
+
+      <div className="mt-8">
+        <h2 className="text-lg font-bold text-[var(--color-text)] mb-3">Publicaciones</h2>
+        {posts.length === 0 ? (
+          <p className="text-sm text-[var(--color-comment)]">Sin publicaciones todavía.</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {posts.map((p) => (
+              <PostCard key={p.id} post={p} onDeleted={(id) => setPosts((prev) => prev.filter((x) => x.id !== id))} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
