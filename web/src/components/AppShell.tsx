@@ -10,6 +10,7 @@ import { Forums } from "../pages/Forums.tsx";
 import { Feed } from "../pages/Feed.tsx";
 import { Profile } from "../pages/Profile.tsx";
 import { EditProfile } from "../pages/EditProfile.tsx";
+import { Logo } from "./Logo.tsx";
 
 type Section = "feed" | "chats" | "friends" | "forums" | "profile";
 
@@ -24,7 +25,7 @@ const NAV: Array<{ id: Section; icon: string; label: string }> = [
 function Placeholder({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-[var(--color-muted)] gap-2">
-      <span className="text-5xl">🌸</span>
+      <Logo size={56} />
       <p>{children}</p>
     </div>
   );
@@ -99,7 +100,7 @@ export function AppShell() {
     <div className="flex h-screen bg-[var(--color-bg)]">
       {/* Rail */}
       <nav className="w-16 flex flex-col items-center gap-2 py-3 bg-[var(--color-surface)] border-r border-[var(--color-border)]">
-        <div className="text-2xl mb-2">🌸</div>
+        <div className="mb-2"><Logo size={32} /></div>
         {NAV.map((item) => (
           <button
             key={item.id}
