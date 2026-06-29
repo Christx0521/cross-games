@@ -122,6 +122,16 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
 
   const presence = createPresence();
 
+  // Entrega un evento a una conversación: foros por room pública, DM/grupo por user-rooms.
+  async function emitToConversation(conversationId: string, event: string, payload: unknown): Promise<void> {
+    if ((await chatService.getConversationType(conversationId)) === "forum") {
+      io.to(`conversation:${conversationId}`).emit(event, payload);
+    } else {
+      const members = await chatService.getMemberIds(conversationId);
+      for (const memberId of members) io.to(`user:${memberId}`).emit(event, payload);
+    }
+  }
+
   async function broadcastPresence(userId: string, online: boolean): Promise<void> {
     const friends = await friendsRepo.listFriends(userId);
     for (const f of friends) io.to(`user:${f.id}`).emit("presence:update", { userId, online });
@@ -167,18 +177,27 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
         const conversationId = String(payload?.conversationId ?? "");
         const body = String(payload?.body ?? "");
         const msg = await chatService.postMessage(user.id, conversationId, body);
-        if ((await chatService.getConversationType(conversationId)) === "forum") {
-          // Foros: difundir a todos los lectores conectados a la room del foro.
-          io.to(`conversation:${conversationId}`).emit("message:new", msg);
-        } else {
-          // DM/grupo: entregar a las rooms privadas de los miembros.
-          const members = await chatService.getMemberIds(conversationId);
-          for (const memberId of members) io.to(`user:${memberId}`).emit("message:new", msg);
-        }
+        await emitToConversation(conversationId, "message:new", msg);
         ack?.({ ok: true, message: msg });
       } catch (err) {
         const code = err instanceof AppError ? err.code : "error";
         ack?.({ ok: false, code });
+      }
+    });
+
+    socket.on("reaction:toggle", async (payload: { messageId?: string; emoji?: string }, ack?: (res: unknown) => void) => {
+      if (!user) {
+        ack?.({ ok: false, code: "unauthenticated" });
+        return;
+      }
+      try {
+        const messageId = String(payload?.messageId ?? "");
+        const emoji = String(payload?.emoji ?? "");
+        const { added, conversationId } = await chatService.toggleReaction(user.id, messageId, emoji);
+        await emitToConversation(conversationId, "reaction:update", { messageId, emoji, userId: user.id, added });
+        ack?.({ ok: true, added });
+      } catch (err) {
+        ack?.({ ok: false, code: err instanceof AppError ? err.code : "error" });
       }
     });
 
@@ -220,7 +239,12 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(passwordRoutes, { passwordService });
   await app.register(profileRoutes, { profileService, sessionService });
   await app.register(friendsRoutes, { friendsService, sessionService });
-  await app.register(chatRoutes, { chatService, sessionService });
+  await app.register(chatRoutes, {
+    chatService,
+    sessionService,
+    storage,
+    deliverMessage: (msg) => emitToConversation(msg.conversation_id, "message:new", msg),
+  });
   await app.register(groupsRoutes, { groupsService, sessionService });
   await app.register(forumsRoutes, { forumsService, chatService, sessionService });
 

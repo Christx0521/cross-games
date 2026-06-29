@@ -105,3 +105,39 @@ test("markRead de no-miembro → 403", async () => {
     (e: AppError) => e.statusCode === 403
   );
 });
+
+test("reacción: toggle añade y quita; el historial la incluye con mine", async () => {
+  const s = await setup();
+  const { conversationId } = await s.service.getOrCreateDm(s.a.id, "bob");
+  const msg = await s.service.postMessage(s.b.id, conversationId, "gg");
+
+  const r1 = await s.service.toggleReaction(s.a.id, msg.id, "🔥");
+  assert.equal(r1.added, true);
+
+  const page = await s.service.getHistory(s.a.id, conversationId, undefined, 30);
+  const last = page.messages.at(-1)!;
+  assert.deepEqual(last.reactions, [{ emoji: "🔥", count: 1, mine: true }]);
+
+  const r2 = await s.service.toggleReaction(s.a.id, msg.id, "🔥");
+  assert.equal(r2.added, false);
+  const page2 = await s.service.getHistory(s.a.id, conversationId, undefined, 30);
+  assert.deepEqual(page2.messages.at(-1)!.reactions, []);
+});
+
+test("reacción con emoji no permitido → 422", async () => {
+  const s = await setup();
+  const { conversationId } = await s.service.getOrCreateDm(s.a.id, "bob");
+  const msg = await s.service.postMessage(s.b.id, conversationId, "gg");
+  await assert.rejects(
+    s.service.toggleReaction(s.a.id, msg.id, "💩"),
+    (e: AppError) => e.statusCode === 422 && e.code === "invalid_emoji"
+  );
+});
+
+test("postMessage con adjunto y sin texto se permite", async () => {
+  const s = await setup();
+  const { conversationId } = await s.service.getOrCreateDm(s.a.id, "bob");
+  const msg = await s.service.postMessage(s.a.id, conversationId, "", "/uploads/x.png");
+  assert.equal(msg.attachment_url, "/uploads/x.png");
+  assert.equal(msg.body, "");
+});

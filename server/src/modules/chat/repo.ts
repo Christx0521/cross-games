@@ -1,5 +1,11 @@
 import type { PGlite } from "@electric-sql/pglite";
 
+export interface Reaction {
+  emoji: string;
+  count: number;
+  mine: boolean;
+}
+
 export interface MessageRow {
   id: string;
   seq: number;
@@ -7,7 +13,9 @@ export interface MessageRow {
   sender_id: string | null;
   sender_nickname: string | null;
   body: string;
+  attachment_url: string | null;
   created_at: string;
+  reactions?: Reaction[];
 }
 
 // PGlite puede devolver BIGSERIAL como string; normalizamos a number.
@@ -102,12 +110,17 @@ export function createChatRepo(db: PGlite) {
       return r.rows.map((x) => x.user_id);
     },
 
-    async insertMessage(conversationId: string, senderId: string, body: string): Promise<MessageRow> {
+    async insertMessage(
+      conversationId: string,
+      senderId: string,
+      body: string,
+      attachmentUrl: string | null = null
+    ): Promise<MessageRow> {
       const r = await db.query<MessageRow>(
-        `INSERT INTO messages (conversation_id, sender_id, body)
-         VALUES ($1, $2, $3)
-         RETURNING id, seq, conversation_id, sender_id, body, created_at`,
-        [conversationId, senderId, body]
+        `INSERT INTO messages (conversation_id, sender_id, body, attachment_url)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, seq, conversation_id, sender_id, body, attachment_url, created_at`,
+        [conversationId, senderId, body, attachmentUrl]
       );
       const sender = await db.query<{ nickname: string }>(
         "SELECT nickname FROM users WHERE id = $1",
@@ -116,11 +129,54 @@ export function createChatRepo(db: PGlite) {
       return normalize({ ...r.rows[0]!, sender_nickname: sender.rows[0]?.nickname ?? null });
     },
 
+    async getMessageConversationId(messageId: string): Promise<string | null> {
+      const r = await db.query<{ conversation_id: string }>(
+        "SELECT conversation_id FROM messages WHERE id = $1",
+        [messageId]
+      );
+      return r.rows[0]?.conversation_id ?? null;
+    },
+
+    // Alterna una reacción. Devuelve true si se añadió, false si se quitó.
+    async toggleReaction(messageId: string, userId: string, emoji: string): Promise<boolean> {
+      const del = await db.query(
+        "DELETE FROM message_reactions WHERE message_id = $1 AND user_id = $2 AND emoji = $3 RETURNING 1",
+        [messageId, userId, emoji]
+      );
+      if (del.rows.length > 0) return false;
+      await db.query(
+        "INSERT INTO message_reactions (message_id, user_id, emoji) VALUES ($1, $2, $3)",
+        [messageId, userId, emoji]
+      );
+      return true;
+    },
+
+    // Resumen de reacciones para un conjunto de mensajes (con flag "mine").
+    async getReactions(messageIds: string[], userId: string | null): Promise<Map<string, Reaction[]>> {
+      const map = new Map<string, Reaction[]>();
+      if (messageIds.length === 0) return map;
+      const r = await db.query<{ message_id: string; emoji: string; count: number; mine: boolean }>(
+        `SELECT message_id, emoji, COUNT(*)::int AS count,
+                bool_or(user_id = $2) AS mine
+         FROM message_reactions
+         WHERE message_id = ANY($1)
+         GROUP BY message_id, emoji
+         ORDER BY emoji`,
+        [messageIds, userId ?? "00000000-0000-0000-0000-000000000000"]
+      );
+      for (const row of r.rows) {
+        const list = map.get(row.message_id) ?? [];
+        list.push({ emoji: row.emoji, count: Number(row.count), mine: row.mine });
+        map.set(row.message_id, list);
+      }
+      return map;
+    },
+
     // Página de historial en orden descendente (más nuevo primero), keyset por seq.
     async listMessages(conversationId: string, beforeSeq: number | null, limit: number): Promise<MessageRow[]> {
       if (beforeSeq !== null) {
         const r = await db.query<MessageRow>(
-          `SELECT m.id, m.seq, m.conversation_id, m.sender_id, u.nickname AS sender_nickname, m.body, m.created_at
+          `SELECT m.id, m.seq, m.conversation_id, m.sender_id, u.nickname AS sender_nickname, m.body, m.attachment_url, m.created_at
            FROM messages m
            LEFT JOIN users u ON u.id = m.sender_id
            WHERE m.conversation_id = $1 AND m.seq < $2
@@ -131,7 +187,7 @@ export function createChatRepo(db: PGlite) {
         return r.rows.map(normalize);
       }
       const r = await db.query<MessageRow>(
-        `SELECT m.id, m.seq, m.conversation_id, m.sender_id, u.nickname AS sender_nickname, m.body, m.created_at
+        `SELECT m.id, m.seq, m.conversation_id, m.sender_id, u.nickname AS sender_nickname, m.body, m.attachment_url, m.created_at
          FROM messages m
          LEFT JOIN users u ON u.id = m.sender_id
          WHERE m.conversation_id = $1
