@@ -8,17 +8,19 @@ import { Friends } from "../pages/Friends.tsx";
 import { Groups } from "../pages/Groups.tsx";
 import { Forums } from "../pages/Forums.tsx";
 import { Feed } from "../pages/Feed.tsx";
+import { Notifications } from "../pages/Notifications.tsx";
 import { Profile } from "../pages/Profile.tsx";
 import { EditProfile } from "../pages/EditProfile.tsx";
 import { Logo } from "./Logo.tsx";
 
-type Section = "feed" | "chats" | "friends" | "forums" | "profile";
+type Section = "feed" | "chats" | "friends" | "forums" | "notifs" | "profile";
 
 const NAV: Array<{ id: Section; icon: string; label: string }> = [
   { id: "feed", icon: "🏠", label: "Inicio" },
   { id: "chats", icon: "💬", label: "Chats" },
   { id: "friends", icon: "👥", label: "Amigos" },
   { id: "forums", icon: "🌐", label: "Foros" },
+  { id: "notifs", icon: "🔔", label: "Avisos" },
   { id: "profile", icon: "👤", label: "Perfil" },
 ];
 
@@ -33,7 +35,7 @@ function Placeholder({ children }: { children: ReactNode }) {
 
 export function AppShell() {
   const { user, logout } = useAuth();
-  const { unread, markRead, setActiveConversation } = useRealtime();
+  const { unread, notifUnread, markRead, markNotifsRead, setActiveConversation } = useRealtime();
   const [section, setSection] = useState<Section>("feed");
   const [chat, setChat] = useState<OpenChat | null>(null);
   const [chatsPanel, setChatsPanel] = useState<"chat" | "groups">("chat");
@@ -50,6 +52,11 @@ export function AppShell() {
       setActiveConversation(null);
     }
   }, [chat, markRead, setActiveConversation]);
+
+  // Al entrar a Avisos, marcar todo como leído (apaga el badge).
+  useEffect(() => {
+    if (section === "notifs") markNotifsRead();
+  }, [section, markNotifsRead]);
 
   function openChat(c: OpenChat) {
     setChat(c);
@@ -73,6 +80,9 @@ export function AppShell() {
   function renderPanel(): ReactNode {
     if (section === "feed") {
       return <Feed />;
+    }
+    if (section === "notifs") {
+      return <Notifications />;
     }
     if (section === "chats") {
       if (chatsPanel === "groups") return <Groups onOpenChat={openChat} />;
@@ -116,6 +126,11 @@ export function AppShell() {
             {item.id === "chats" && totalUnread > 0 && (
               <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full bg-[var(--color-magenta)] text-white text-xs font-bold flex items-center justify-center">
                 {totalUnread > 99 ? "99+" : totalUnread}
+              </span>
+            )}
+            {item.id === "notifs" && notifUnread > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full bg-[var(--color-magenta)] text-white text-xs font-bold flex items-center justify-center">
+                {notifUnread > 99 ? "99+" : notifUnread}
               </span>
             )}
           </button>

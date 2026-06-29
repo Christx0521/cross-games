@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { api, API_BASE } from "../lib/api.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { timeAgo } from "../lib/forum.ts";
+import { MentionText } from "./MentionText.tsx";
 import { type Post, type PostComment } from "../lib/feed.ts";
 
 function Avatar({ url, name, small = false }: { url: string | null; name: string; small?: boolean }) {
@@ -83,7 +84,7 @@ export function PostCard({ post, onDeleted }: { post: Post; onDeleted?: (id: str
         )}
       </header>
 
-      {post.body && <p className="text-[var(--color-text)] whitespace-pre-wrap mb-2">{post.body}</p>}
+      {post.body && <p className="text-[var(--color-text)] mb-2"><MentionText text={post.body} /></p>}
       {post.attachment_url && (
         <img src={`${API_BASE}${post.attachment_url}`} alt="adjunto" className="rounded-lg max-h-96 w-full object-cover mb-2" />
       )}
@@ -125,7 +126,7 @@ export function PostCard({ post, onDeleted }: { post: Post; onDeleted?: (id: str
                       <span className="font-semibold text-[var(--color-purple)]">{c.author_nickname}</span>{" "}
                       <span className="text-[var(--color-comment)]">· {timeAgo(c.created_at)}</span>
                     </p>
-                    <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap">{c.body}</p>
+                    <p className="text-sm text-[var(--color-text)]"><MentionText text={c.body} /></p>
                   </div>
                 </div>
               ))}

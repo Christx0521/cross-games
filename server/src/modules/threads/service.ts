@@ -1,5 +1,6 @@
 import type { ThreadsRepo, ThreadRow, CommentRow, ThreadSort } from "./repo.ts";
 import type { ForumsRepo } from "../forums/repo.ts";
+import type { Notifier } from "../notifications/service.ts";
 import { AppError } from "../../lib/errors.ts";
 
 const MAX_TITLE = 200;
@@ -7,8 +8,19 @@ const MAX_BODY = 8000;
 const MAX_COMMENT = 4000;
 const SORTS: ThreadSort[] = ["hot", "new", "top"];
 
-export function createThreadsService(deps: { repo: ThreadsRepo; forumsRepo: ForumsRepo }) {
+const NOOP_NOTIFIER: Notifier = {
+  async direct() {},
+  async mentions() {},
+};
+
+function snippet(text: string, max = 80): string {
+  const t = text.trim().replace(/\s+/g, " ");
+  return t.length > max ? `${t.slice(0, max)}…` : t;
+}
+
+export function createThreadsService(deps: { repo: ThreadsRepo; forumsRepo: ForumsRepo; notifier?: Notifier }) {
   const { repo, forumsRepo } = deps;
+  const notifier = deps.notifier ?? NOOP_NOTIFIER;
 
   async function ensureForum(forumId: string): Promise<void> {
     if (!(await forumsRepo.getForum(forumId))) throw new AppError(404, "forum_not_found");
@@ -43,6 +55,7 @@ export function createThreadsService(deps: { repo: ThreadsRepo; forumsRepo: Foru
         body,
         attachmentUrl: input.attachmentUrl ?? null,
       });
+      await notifier.mentions({ text: `${title} ${body}`, actorId: authorId, entityType: "thread", entityId: id, preview: snippet(title) });
       return (await repo.getThread(id, authorId))!;
     },
 
@@ -74,6 +87,20 @@ export function createThreadsService(deps: { repo: ThreadsRepo; forumsRepo: Foru
       }
 
       const id = await repo.createComment({ threadId, parentId, authorId, body });
+
+      const thread = await repo.getThread(threadId, null);
+      if (thread) {
+        await notifier.direct({
+          recipientId: thread.author_id,
+          actorId: authorId,
+          type: "thread_comment",
+          entityType: "thread",
+          entityId: threadId,
+          preview: snippet(body),
+        });
+      }
+      await notifier.mentions({ text: body, actorId: authorId, entityType: "thread", entityId: threadId, preview: snippet(body) });
+
       const comments = await repo.listComments(threadId, authorId);
       return comments.find((c) => c.id === id)!;
     },

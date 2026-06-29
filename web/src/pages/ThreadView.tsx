@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api, API_BASE } from "../lib/api.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { VoteBar } from "../components/VoteBar.tsx";
+import { MentionText } from "../components/MentionText.tsx";
 import { Alert } from "../components/ui.tsx";
 import {
   type Thread,
@@ -108,7 +109,7 @@ export function ThreadView({ threadId, onBack }: { threadId: string; onBack: () 
                 className="rounded-lg max-h-96 mb-2 object-contain"
               />
             )}
-            {thread.body && <p className="text-[var(--color-text)] whitespace-pre-wrap">{thread.body}</p>}
+            {thread.body && <p className="text-[var(--color-text)]"><MentionText text={thread.body} /></p>}
           </div>
         </div>
 
@@ -193,7 +194,7 @@ function CommentItem({
             </span>{" "}
             · {timeAgo(node.created_at)}
           </p>
-          <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap">{node.body}</p>
+          <p className="text-sm text-[var(--color-text)]"><MentionText text={node.body} /></p>
           <button onClick={() => setOpen((o) => !o)} className="text-xs text-[var(--color-muted)] hover:text-[var(--color-pink)] mt-0.5">
             Responder
           </button>

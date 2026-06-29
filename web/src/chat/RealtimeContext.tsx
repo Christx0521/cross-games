@@ -11,8 +11,10 @@ interface UnreadRow {
 interface RealtimeState {
   online: Set<string>;
   unread: Record<string, number>;
+  notifUnread: number;
   isOnline: (userId: string) => boolean;
   markRead: (conversationId: string) => void;
+  markNotifsRead: () => void;
   activeConversation: string | null;
   setActiveConversation: (id: string | null) => void;
 }
@@ -22,6 +24,7 @@ const Ctx = createContext<RealtimeState | null>(null);
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState<Set<string>>(new Set());
   const [unread, setUnread] = useState<Record<string, number>>({});
+  const [notifUnread, setNotifUnread] = useState(0);
   const activeRef = useRef<string | null>(null);
   const [, force] = useState(0);
 
@@ -44,11 +47,21 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const markNotifsRead = useCallback(() => {
+    setNotifUnread(0);
+    void api.post("/notifications/read", {}).catch(() => {});
+  }, []);
+
   useEffect(() => {
     // Estado inicial de no leídos
     api
       .get<UnreadRow[]>("/conversations/unread")
       .then((rows) => setUnread(Object.fromEntries(rows.map((r) => [r.conversation_id, r.count]))))
+      .catch(() => {});
+
+    api
+      .get<{ count: number }>("/notifications/unread")
+      .then((r) => setNotifUnread(r.count))
       .catch(() => {});
 
     const socket = getSocket();
@@ -70,13 +83,17 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       setUnread((u) => ({ ...u, [m.conversation_id]: (u[m.conversation_id] ?? 0) + 1 }));
     };
 
+    const onNotif = () => setNotifUnread((n) => n + 1);
+
     socket.on("presence:snapshot", onSnapshot);
     socket.on("presence:update", onPresence);
     socket.on("message:new", onMessage);
+    socket.on("notification:new", onNotif);
     return () => {
       socket.off("presence:snapshot", onSnapshot);
       socket.off("presence:update", onPresence);
       socket.off("message:new", onMessage);
+      socket.off("notification:new", onNotif);
     };
   }, []);
 
@@ -85,8 +102,10 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       value={{
         online,
         unread,
+        notifUnread,
         isOnline: (id) => online.has(id),
         markRead,
+        markNotifsRead,
         activeConversation: activeRef.current,
         setActiveConversation,
       }}
