@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, API_BASE, ApiError } from "../lib/api.ts";
 import { type PublicProfile } from "../lib/profile.ts";
+import { type MyIntegration } from "../lib/integrations.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { Field, Button, Alert } from "../components/ui.tsx";
 
@@ -29,6 +30,7 @@ export function EditProfile({ onBack }: { onBack?: () => void }) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<BlockedUser[]>([]);
+  const [steam, setSteam] = useState<MyIntegration | null>(null);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,11 +46,17 @@ export function EditProfile({ onBack }: { onBack?: () => void }) {
       setBannerUrl(p.banner_url);
     });
     api.get<BlockedUser[]>("/blocks").then(setBlocked).catch(() => setBlocked([]));
+    api.get<MyIntegration>("/integrations/steam/me").then(setSteam).catch(() => setSteam(null));
   }, [user]);
 
   async function unblock(id: string) {
     await api.del(`/blocks/${id}`);
     setBlocked((prev) => prev.filter((u) => u.id !== id));
+  }
+
+  async function unlinkSteam() {
+    await api.del("/integrations/steam");
+    setSteam((s) => (s ? { ...s, linked: false, steamid64: null, persona_name: null, now_playing: null } : s));
   }
 
   async function save(e: FormEvent) {
@@ -174,6 +182,32 @@ export function EditProfile({ onBack }: { onBack?: () => void }) {
         />
         <Button type="submit" disabled={loading}>{loading ? "Guardando…" : "Guardar"}</Button>
       </form>
+
+      <div className="mt-8">
+        <h2 className="text-sm uppercase text-[var(--color-comment)] mb-2">Steam</h2>
+        {steam?.linked ? (
+          <div className="p-3 rounded-lg bg-[var(--color-bg)]">
+            <p className="text-sm text-[var(--color-text)]">
+              Vinculado{steam.persona_name ? ` como ${steam.persona_name}` : ` (ID ${steam.steamid64})`}.
+            </p>
+            {!steam.enabled && (
+              <p className="text-xs text-[var(--color-comment)] mt-1">
+                Configura <code>STEAM_API_KEY</code> en el servidor para mostrar tu actividad y juegos.
+              </p>
+            )}
+            <button onClick={() => void unlinkSteam()} className="mt-2 text-sm text-[var(--color-red)] hover:underline">
+              Desvincular Steam
+            </button>
+          </div>
+        ) : (
+          <a
+            href={`${API_BASE}/integrations/steam/login`}
+            className="inline-block px-4 py-2 rounded-lg font-semibold bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-border)]"
+          >
+            Vincular cuenta de Steam
+          </a>
+        )}
+      </div>
 
       <div className="mt-8">
         <h2 className="text-sm uppercase text-[var(--color-comment)] mb-2">Usuarios bloqueados</h2>

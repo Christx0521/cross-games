@@ -95,4 +95,9 @@ cd server; npm test
   - `GET /stories` (agrupadas por autor, con visto/no visto), `POST /stories` (multipart), `POST /stories/:id/view`, `DELETE /stories/:id`.
   - UI: anillos arriba del feed (degradado si hay no vistas), visor a pantalla completa con barras de progreso y navegación por toque.
 
-**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10–M13** + **menciones + notificaciones** + **perfil rico (banner + juegos)** + **moderación (bloquear/reportar)** + **stories efímeras (24h)**. Pendiente: M9 (integración con juegos/Steam).
+- **M9 — Integración con Steam: completo (Fase 1).**
+  - Vinculación por **Steam OpenID 2.0** (no requiere clave): `GET /integrations/steam/login` → `/callback`. "Jugando ahora" + nick/avatar vía Steam Web API si hay `STEAM_API_KEY`; sin clave, la vinculación funciona y los datos quedan en blanco (degradación elegante).
+  - `GET /integrations/steam/me`, `DELETE /integrations/steam`, `GET /users/:nickname/steam` (público, no expone el SteamID64). Cliente Steam **inyectable** (fake en tests, real con `fetch`, desactivado sin clave).
+  - UI: vincular/desvincular en "Editar perfil" y badge "Jugando a…" en el perfil. Pendiente Fase 2/3: poller de presencia en vivo y rango por-juego (OpenDota/Riot).
+
+**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M9 (Steam)** + **M10–M13** + **menciones + notificaciones** + **perfil rico (banner + juegos)** + **moderación (bloquear/reportar)** + **stories efímeras (24h)**. Roadmap base + extras: **completo**.

@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { api, API_BASE, ApiError } from "../lib/api.ts";
 import { type PublicProfile, flagEmoji } from "../lib/profile.ts";
 import { type Post, type PostsPage } from "../lib/feed.ts";
+import { type PublicSteam } from "../lib/integrations.ts";
 import { PostCard } from "../components/PostCard.tsx";
 import { Button, Alert } from "../components/ui.tsx";
 
 export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () => void }) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [steam, setSteam] = useState<PublicSteam | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -19,6 +21,10 @@ export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () =>
       .get<PostsPage>(`/users/${nickname}/posts?limit=20`)
       .then((page) => setPosts(page.posts))
       .catch(() => setPosts([]));
+    api
+      .get<PublicSteam>(`/users/${nickname}/steam`)
+      .then(setSteam)
+      .catch(() => setSteam(null));
   }, [nickname]);
 
   if (error) {
@@ -71,6 +77,16 @@ export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () =>
           </div>
         </div>
       </div>
+
+      {steam?.now_playing && (
+        <div className="mb-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-surface-2)] text-sm">
+          <span className="w-2 h-2 rounded-full bg-[var(--color-green)]" />
+          <span className="text-[var(--color-text)]">Jugando a <strong>{steam.now_playing}</strong></span>
+        </div>
+      )}
+      {steam?.linked && !steam.now_playing && steam.persona_name && (
+        <p className="mb-3 text-xs text-[var(--color-comment)]">Steam: {steam.persona_name}</p>
+      )}
 
       {profile.description && <p className="mb-4 text-[var(--color-text)]">{profile.description}</p>}
 

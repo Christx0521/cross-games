@@ -42,6 +42,10 @@ import { moderationRoutes } from "./modules/moderation/routes.ts";
 import { createStoriesRepo } from "./modules/stories/repo.ts";
 import { createStoriesService } from "./modules/stories/service.ts";
 import { storiesRoutes } from "./modules/stories/routes.ts";
+import { createIntegrationsRepo } from "./modules/integrations/repo.ts";
+import { createIntegrationsService } from "./modules/integrations/service.ts";
+import { integrationsRoutes } from "./modules/integrations/routes.ts";
+import { createSteamClient } from "./lib/steam.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -154,6 +158,10 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
     repo: createStoriesRepo(opts.db),
     friendsRepo,
     blockedIds: moderationService.blockedIds,
+  });
+  const integrationsService = createIntegrationsService({
+    repo: createIntegrationsRepo(opts.db),
+    client: createSteamClient(env.STEAM_API_KEY),
   });
   const groupsService = createGroupsService({ repo: groupsRepo, notify });
 
@@ -290,6 +298,12 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(notificationsRoutes, { notificationsService, sessionService });
   await app.register(moderationRoutes, { moderationService, sessionService });
   await app.register(storiesRoutes, { storiesService, sessionService, storage });
+  await app.register(integrationsRoutes, {
+    integrationsService,
+    sessionService,
+    apiOrigin: env.API_ORIGIN,
+    webOrigin: env.WEB_ORIGIN,
+  });
 
   return app;
 }

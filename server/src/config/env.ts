@@ -20,6 +20,10 @@ const schema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   RESEND_API_KEY: z.string().default(""),
   EMAIL_FROM: z.string().min(1).default("Cross-Games <onboarding@resend.dev>"),
+  // Integración Steam (opcional). Sin clave: la vinculación OpenID funciona,
+  // pero los datos de jugador (nick, avatar, jugando ahora) no se obtienen.
+  STEAM_API_KEY: z.string().default(""),
+  API_ORIGIN: z.url().default("http://localhost:3000"),
 });
 
 export type Env = z.infer<typeof schema>;

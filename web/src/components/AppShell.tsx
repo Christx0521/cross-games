@@ -58,6 +58,21 @@ export function AppShell() {
     if (section === "notifs") markNotifsRead();
   }, [section, markNotifsRead]);
 
+  // Aviso del resultado de vincular Steam (vuelve con ?steam=...).
+  const [steamMsg, setSteamMsg] = useState<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("steam");
+    if (!result) return;
+    const messages: Record<string, string> = {
+      linked: "Cuenta de Steam vinculada.",
+      error: "No se pudo vincular Steam. Intenta de nuevo.",
+      login_required: "Inicia sesión antes de vincular Steam.",
+    };
+    setSteamMsg(messages[result] ?? null);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
   function openChat(c: OpenChat) {
     setChat(c);
     setChatsPanel("chat");
@@ -152,7 +167,15 @@ export function AppShell() {
       )}
 
       {/* Panel principal */}
-      <main className="flex-1 min-w-0 bg-[var(--color-bg)]">{renderPanel()}</main>
+      <main className="flex-1 min-w-0 bg-[var(--color-bg)] flex flex-col">
+        {steamMsg && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-2)] text-sm text-[var(--color-text)] border-b border-[var(--color-border)]">
+            <span className="flex-1">{steamMsg}</span>
+            <button onClick={() => setSteamMsg(null)} className="text-[var(--color-muted)] hover:text-[var(--color-text)]">×</button>
+          </div>
+        )}
+        <div className="flex-1 min-h-0">{renderPanel()}</div>
+      </main>
     </div>
   );
 }
