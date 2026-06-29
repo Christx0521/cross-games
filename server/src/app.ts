@@ -36,6 +36,9 @@ import { feedRoutes } from "./modules/feed/routes.ts";
 import { createNotificationsRepo } from "./modules/notifications/repo.ts";
 import { createNotificationsService } from "./modules/notifications/service.ts";
 import { notificationsRoutes } from "./modules/notifications/routes.ts";
+import { createModerationRepo } from "./modules/moderation/repo.ts";
+import { createModerationService } from "./modules/moderation/service.ts";
+import { moderationRoutes } from "./modules/moderation/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -91,8 +94,10 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const sessionRepo = createSessionRepo(opts.db);
   const profileRepo = createProfileRepo(opts.db);
   const friendsRepo = createFriendsRepo(opts.db);
+  const moderationRepo = createModerationRepo(opts.db);
+  const moderationService = createModerationService({ repo: moderationRepo });
   const chatRepo = createChatRepo(opts.db);
-  const chatService = createChatService({ repo: chatRepo });
+  const chatService = createChatService({ repo: chatRepo, isBlocked: moderationService.isBlocked });
   const groupsRepo = createGroupsRepo(opts.db);
   const forumsRepo = createForumsRepo(opts.db);
   const forumsService = createForumsService({ repo: forumsRepo, chatRepo });
@@ -135,8 +140,13 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   // Servicio de notificaciones + servicios que dependen de él (necesitan `notify`).
   const notificationsService = createNotificationsService({ repo: notificationsRepo, emit: notify });
   const threadsService = createThreadsService({ repo: threadsRepo, forumsRepo, notifier: notificationsService });
-  const feedService = createFeedService({ repo: feedRepo, friendsRepo, notifier: notificationsService });
-  const friendsService = createFriendsService({ repo: friendsRepo, notify });
+  const feedService = createFeedService({
+    repo: feedRepo,
+    friendsRepo,
+    notifier: notificationsService,
+    blockedIds: moderationService.blockedIds,
+  });
+  const friendsService = createFriendsService({ repo: friendsRepo, notify, isBlocked: moderationService.isBlocked });
   const groupsService = createGroupsService({ repo: groupsRepo, notify });
 
   const presence = createPresence();
@@ -270,6 +280,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(searchRoutes, { searchRepo });
   await app.register(feedRoutes, { feedService, sessionService, storage });
   await app.register(notificationsRoutes, { notificationsService, sessionService });
+  await app.register(moderationRoutes, { moderationService, sessionService });
 
   return app;
 }

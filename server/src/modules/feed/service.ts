@@ -25,9 +25,15 @@ export interface PostsPage {
   nextCursor: string | null;
 }
 
-export function createFeedService(deps: { repo: FeedRepo; friendsRepo: FriendsRepo; notifier?: Notifier }) {
+export function createFeedService(deps: {
+  repo: FeedRepo;
+  friendsRepo: FriendsRepo;
+  notifier?: Notifier;
+  blockedIds?: (userId: string) => Promise<string[]>;
+}) {
   const { repo, friendsRepo } = deps;
   const notifier = deps.notifier ?? NOOP_NOTIFIER;
+  const blockedIds = deps.blockedIds ?? (async () => []);
 
   function resolveCursor(beforeRaw: string | undefined, limitRaw: number | undefined): { beforeSeq: number | null; limit: number } {
     const limit = Math.min(Math.max(limitRaw ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
@@ -59,8 +65,9 @@ export function createFeedService(deps: { repo: FeedRepo; friendsRepo: FriendsRe
     // Feed personal: publicaciones propias + de amigos, más recientes primero.
     async getFeed(userId: string, beforeRaw: string | undefined, limitRaw: number | undefined): Promise<PostsPage> {
       const { beforeSeq, limit } = resolveCursor(beforeRaw, limitRaw);
-      const friends = await friendsRepo.listFriends(userId);
-      const authorIds = [userId, ...friends.map((f) => f.id)];
+      const [friends, blocked] = await Promise.all([friendsRepo.listFriends(userId), blockedIds(userId)]);
+      const blockedSet = new Set(blocked);
+      const authorIds = [userId, ...friends.map((f) => f.id)].filter((id) => !blockedSet.has(id));
       const rows = await repo.listByAuthors(authorIds, beforeSeq, limit + 1, userId);
       return toPage(rows, limit);
     },

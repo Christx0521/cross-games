@@ -16,7 +16,15 @@ function Avatar({ url, name, small = false }: { url: string | null; name: string
   );
 }
 
-export function PostCard({ post, onDeleted }: { post: Post; onDeleted?: (id: string) => void }) {
+export function PostCard({
+  post,
+  onDeleted,
+  onAuthorBlocked,
+}: {
+  post: Post;
+  onDeleted?: (id: string) => void;
+  onAuthorBlocked?: (authorId: string) => void;
+}) {
   const { user } = useAuth();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.like_count);
@@ -24,6 +32,7 @@ export function PostCard({ post, onDeleted }: { post: Post; onDeleted?: (id: str
   const [comments, setComments] = useState<PostComment[] | null>(null);
   const [commentCount, setCommentCount] = useState(post.comment_count);
   const [text, setText] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const mine = post.author_id === user?.id;
 
   async function toggleLike() {
@@ -69,6 +78,29 @@ export function PostCard({ post, onDeleted }: { post: Post; onDeleted?: (id: str
     onDeleted?.(post.id);
   }
 
+  async function report() {
+    setMenuOpen(false);
+    const reason = prompt("¿Por qué reportas esta publicación?") ?? "";
+    if (reason === null) return;
+    try {
+      await api.post("/reports", { targetType: "post", targetId: post.id, reason });
+      alert("Gracias, recibimos tu reporte.");
+    } catch {
+      alert("No se pudo enviar el reporte.");
+    }
+  }
+
+  async function block() {
+    setMenuOpen(false);
+    if (!confirm(`¿Bloquear a ${post.author_nickname}? No verás su contenido ni podrá escribirte.`)) return;
+    try {
+      await api.post("/blocks", { nickname: post.author_nickname });
+      onAuthorBlocked?.(post.author_id);
+    } catch {
+      alert("No se pudo bloquear al usuario.");
+    }
+  }
+
   return (
     <article className="p-4 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
       <header className="flex items-center gap-2 mb-2">
@@ -77,10 +109,26 @@ export function PostCard({ post, onDeleted }: { post: Post; onDeleted?: (id: str
           <p className="font-semibold text-[var(--color-text)]">{post.author_nickname}</p>
           <p className="text-xs text-[var(--color-comment)]">{timeAgo(post.created_at)}</p>
         </div>
-        {mine && (
+        {mine ? (
           <button onClick={() => void remove()} className="text-[var(--color-muted)] hover:text-[var(--color-red)] text-sm" title="Borrar">
             🗑
           </button>
+        ) : (
+          <div className="relative">
+            <button onClick={() => setMenuOpen((o) => !o)} className="text-[var(--color-muted)] hover:text-[var(--color-text)] text-lg leading-none px-1" title="Más">
+              ⋯
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-6 z-10 w-44 py-1 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] shadow-lg text-sm">
+                <button onClick={() => void report()} className="block w-full text-left px-3 py-1.5 text-[var(--color-text)] hover:bg-[var(--color-surface)]">
+                  🚩 Reportar publicación
+                </button>
+                <button onClick={() => void block()} className="block w-full text-left px-3 py-1.5 text-[var(--color-red)] hover:bg-[var(--color-surface)]">
+                  🚫 Bloquear a {post.author_nickname}
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </header>
 

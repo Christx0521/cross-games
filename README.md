@@ -86,4 +86,8 @@ cd server; npm test
   - Banner/portada (`POST /me/banner`) + juegos favoritos (lista de títulos, máx 12, deduplicados) vía `PATCH /me/profile`.
   - `GET /users/:nickname` ahora incluye `banner_url` y `games`. UI: banner en el perfil con avatar superpuesto y chips de juegos; edición en "Editar perfil".
 
-**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)** + **M13 (feed/muro social)** + **menciones + notificaciones** + **perfil rico (banner + juegos)**. Próximo: stories efímeras, moderación (bloquear/reportar). M9 (juegos) más adelante.
+- **Moderación: completo.**
+  - Bloquear/desbloquear usuarios (`POST/DELETE /blocks`, `GET /blocks`) y reportar contenido (`POST /reports`: user/post/thread/comment/message).
+  - El bloqueo (bidireccional) impide abrir DM y enviar solicitud de amistad, y oculta los posts en el feed. UI: menú ⋯ en cada post (reportar/bloquear) y gestión de bloqueados en "Editar perfil".
+
+**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)** + **M13 (feed/muro social)** + **menciones + notificaciones** + **perfil rico (banner + juegos)** + **moderación (bloquear/reportar)**. Próximo: stories efímeras. M9 (juegos) más adelante.

@@ -4,6 +4,12 @@ import { type PublicProfile } from "../lib/profile.ts";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { Field, Button, Alert } from "../components/ui.tsx";
 
+interface BlockedUser {
+  id: string;
+  nickname: string;
+  avatar_url: string | null;
+}
+
 const MESSAGES: Record<string, string> = {
   invalid_country_code: "Código de país inválido (2 letras, p. ej. PA).",
   invalid_language_code: "Código de idioma inválido (2 letras, p. ej. es).",
@@ -22,6 +28,7 @@ export function EditProfile({ onBack }: { onBack?: () => void }) {
   const [games, setGames] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<BlockedUser[]>([]);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +43,13 @@ export function EditProfile({ onBack }: { onBack?: () => void }) {
       setAvatarUrl(p.avatar_url);
       setBannerUrl(p.banner_url);
     });
+    api.get<BlockedUser[]>("/blocks").then(setBlocked).catch(() => setBlocked([]));
   }, [user]);
+
+  async function unblock(id: string) {
+    await api.del(`/blocks/${id}`);
+    setBlocked((prev) => prev.filter((u) => u.id !== id));
+  }
 
   async function save(e: FormEvent) {
     e.preventDefault();
@@ -161,6 +174,31 @@ export function EditProfile({ onBack }: { onBack?: () => void }) {
         />
         <Button type="submit" disabled={loading}>{loading ? "Guardando…" : "Guardar"}</Button>
       </form>
+
+      <div className="mt-8">
+        <h2 className="text-sm uppercase text-[var(--color-comment)] mb-2">Usuarios bloqueados</h2>
+        {blocked.length === 0 ? (
+          <p className="text-sm text-[var(--color-comment)]">No has bloqueado a nadie.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {blocked.map((u) => (
+              <div key={u.id} className="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-bg)]">
+                {u.avatar_url ? (
+                  <img src={`${API_BASE}${u.avatar_url}`} alt="" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-[var(--color-pink)] font-bold text-sm">
+                    {u.nickname.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="flex-1 text-[var(--color-text)]">{u.nickname}</span>
+                <button onClick={() => void unblock(u.id)} className="text-sm text-[var(--color-purple)] hover:underline">
+                  Desbloquear
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       {onBack && (
         <button onClick={onBack} className="mt-4 w-full text-sm text-[var(--color-muted)] hover:underline">
           ← Volver al perfil

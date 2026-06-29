@@ -8,9 +8,14 @@ export interface RequestResult {
   friendshipId: string;
 }
 
-export function createFriendsService(deps: { repo: FriendsRepo; notify?: Notify }) {
+export function createFriendsService(deps: {
+  repo: FriendsRepo;
+  notify?: Notify;
+  isBlocked?: (a: string, b: string) => Promise<boolean>;
+}) {
   const { repo } = deps;
   const notify: Notify = deps.notify ?? (() => {});
+  const isBlocked = deps.isBlocked ?? (async () => false);
 
   return {
     async requestFriend(
@@ -20,6 +25,7 @@ export function createFriendsService(deps: { repo: FriendsRepo; notify?: Notify 
       const target = await repo.findUserByNickname(nickname);
       if (!target) throw new AppError(404, "user_not_found");
       if (target.id === requester.id) throw new AppError(400, "cannot_add_self");
+      if (await isBlocked(requester.id, target.id)) throw new AppError(403, "blocked");
 
       const rel = await repo.findRelationship(requester.id, target.id);
       if (rel) {

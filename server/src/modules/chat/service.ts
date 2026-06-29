@@ -12,8 +12,9 @@ export interface HistoryPage {
   nextCursor: string | null;
 }
 
-export function createChatService(deps: { repo: ChatRepo }) {
+export function createChatService(deps: { repo: ChatRepo; isBlocked?: (a: string, b: string) => Promise<boolean> }) {
   const { repo } = deps;
+  const isBlocked = deps.isBlocked ?? (async () => false);
 
   async function ensureMember(conversationId: string, userId: string): Promise<void> {
     if (!(await repo.isMember(conversationId, userId))) {
@@ -51,6 +52,7 @@ export function createChatService(deps: { repo: ChatRepo }) {
       const target = await repo.findUserByNickname(nickname);
       if (!target) throw new AppError(404, "user_not_found");
       if (target.id === userId) throw new AppError(400, "cannot_dm_self");
+      if (await isBlocked(userId, target.id)) throw new AppError(403, "blocked");
 
       const existing = await repo.findDmBetween(userId, target.id);
       if (existing) return { conversationId: existing };

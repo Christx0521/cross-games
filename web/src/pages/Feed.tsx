@@ -110,7 +110,12 @@ export function Feed() {
         ) : (
           <div className="flex flex-col gap-4">
             {posts.map((p) => (
-              <PostCard key={p.id} post={p} onDeleted={(id) => setPosts((prev) => prev.filter((x) => x.id !== id))} />
+              <PostCard
+                key={p.id}
+                post={p}
+                onDeleted={(id) => setPosts((prev) => prev.filter((x) => x.id !== id))}
+                onAuthorBlocked={(authorId) => setPosts((prev) => prev.filter((x) => x.author_id !== authorId))}
+              />
             ))}
           </div>
         )}
