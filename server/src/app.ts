@@ -25,6 +25,11 @@ import { groupsRoutes } from "./modules/groups/routes.ts";
 import { createForumsRepo } from "./modules/forums/repo.ts";
 import { createForumsService } from "./modules/forums/service.ts";
 import { forumsRoutes } from "./modules/forums/routes.ts";
+import { createThreadsRepo } from "./modules/threads/repo.ts";
+import { createThreadsService } from "./modules/threads/service.ts";
+import { threadsRoutes } from "./modules/threads/routes.ts";
+import { createSearchRepo } from "./modules/search/repo.ts";
+import { searchRoutes } from "./modules/search/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -85,6 +90,9 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const groupsRepo = createGroupsRepo(opts.db);
   const forumsRepo = createForumsRepo(opts.db);
   const forumsService = createForumsService({ repo: forumsRepo, chatRepo });
+  const threadsRepo = createThreadsRepo(opts.db);
+  const threadsService = createThreadsService({ repo: threadsRepo, forumsRepo });
+  const searchRepo = createSearchRepo(opts.db);
   const authService = createAuthService({ repo: authRepo });
   const sessionService = createSessionService({ authRepo, sessionRepo });
   const passwordService = createPasswordService({ authRepo, sessionRepo });
@@ -247,6 +255,8 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   });
   await app.register(groupsRoutes, { groupsService, sessionService });
   await app.register(forumsRoutes, { forumsService, chatService, sessionService });
+  await app.register(threadsRoutes, { threadsService, sessionService });
+  await app.register(searchRoutes, { searchRepo });
 
   return app;
 }

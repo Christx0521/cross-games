@@ -26,3 +26,17 @@ export function makeSessionGuard(sessionService: SessionService) {
     req.user = await sessionService.me(sessionId);
   };
 }
+
+// Resuelve la sesión si existe pero nunca falla: para lecturas públicas que
+// quieren personalizar la respuesta (p. ej. el voto propio) cuando hay login.
+export function makeOptionalSession(sessionService: SessionService) {
+  return async function optionalSession(req: FastifyRequest, _reply: FastifyReply): Promise<void> {
+    const sessionId = readSessionId(req);
+    if (!sessionId) return;
+    try {
+      req.user = await sessionService.me(sessionId);
+    } catch {
+      // sesión inválida → continúa como anónimo
+    }
+  };
+}

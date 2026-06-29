@@ -67,4 +67,9 @@ cd server; npm test
 - **M8 — Foros públicos: completo.**
   - `GET /forums` y `GET /forums/:id/messages` públicos; `POST /forums` requiere sesión.
   - Filtro con país prioritario + idioma + continente. Socket permite lectura anónima en vivo (forum:join); postear exige sesión.
-**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)**. Próximo: M12 (foros Reddit), M13 (feed). M9 (juegos) más adelante.
+- **M12 — Foros estilo Reddit: completo.**
+  - Hilos (post con título + cuerpo), votos ↑↓ con score y orden `hot`/`new`/`top`, y comentarios anidados con voto propio.
+  - `GET /forums/:id/threads?sort=`, `POST /forums/:id/threads`, `GET /threads/:id`, `GET/POST /threads/:id/comments`, `POST /threads/:id/vote`, `POST /comments/:id/vote`.
+  - Búsqueda global `GET /search?q=` (foros por nombre + usuarios por nickname). Lecturas públicas con sesión opcional (personaliza `my_vote`).
+
+**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)**. Próximo: M13 (feed/muro social) y extras (menciones, stories, perfil rico, moderación). M9 (juegos) más adelante.

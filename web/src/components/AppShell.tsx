@@ -79,25 +79,7 @@ export function AppShell() {
       return <Friends onOpenChat={openChat} />;
     }
     if (section === "forums") {
-      if (chat && chat.isForum) {
-        return (
-          <ChatView
-            key={chat.conversationId}
-            conversationId={chat.conversationId}
-            title={chat.title}
-            isForum
-            forumId={chat.forumId}
-            onBack={() => setChat(null)}
-          />
-        );
-      }
-      return (
-        <Forums
-          onOpenForum={(f) =>
-            setChat({ conversationId: f.conversationId, title: f.title, isForum: true, forumId: f.forumId })
-          }
-        />
-      );
+      return <Forums onOpenChat={openChat} />;
     }
     // profile
     if (profileMode === "edit") {
