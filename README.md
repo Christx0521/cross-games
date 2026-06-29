@@ -67,4 +67,4 @@ cd server; npm test
 - **M8 — Foros públicos: completo.**
   - `GET /forums` y `GET /forums/:id/messages` públicos; `POST /forums` requiere sesión.
   - Filtro con país prioritario + idioma + continente. Socket permite lectura anónima en vivo (forum:join); postear exige sesión.
-**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia en línea + no leídos)**. Próximo: M11 (chat enriquecido), luego M12 (foros Reddit), M13 (feed). M9 (juegos) más adelante.
+**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)**. Próximo: M12 (foros Reddit), M13 (feed). M9 (juegos) más adelante.
