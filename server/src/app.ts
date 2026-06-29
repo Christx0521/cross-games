@@ -9,6 +9,7 @@ import type { PGlite } from "@electric-sql/pglite";
 import { env } from "./config/env.ts";
 import { AppError } from "./lib/errors.ts";
 import { createDiskStorage } from "./lib/storage.ts";
+import { createPresence } from "./lib/presence.ts";
 import { createProfileRepo } from "./modules/profile/repo.ts";
 import { createProfileService } from "./modules/profile/service.ts";
 import { profileRoutes } from "./modules/profile/routes.ts";
@@ -119,10 +120,31 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   const friendsService = createFriendsService({ repo: friendsRepo, notify });
   const groupsService = createGroupsService({ repo: groupsRepo, notify });
 
+  const presence = createPresence();
+
+  async function broadcastPresence(userId: string, online: boolean): Promise<void> {
+    const friends = await friendsRepo.listFriends(userId);
+    for (const f of friends) io.to(`user:${f.id}`).emit("presence:update", { userId, online });
+  }
+
   io.on("connection", (socket) => {
     const user = socket.data.user;
     // Usuario autenticado: room privada para notificaciones dirigidas.
-    if (user) socket.join(`user:${user.id}`);
+    if (user) {
+      socket.join(`user:${user.id}`);
+
+      // Presencia: avisar a los amigos al conectar; enviar snapshot al recién llegado.
+      const wentOnline = presence.connect(user.id);
+      void (async () => {
+        const friends = await friendsRepo.listFriends(user.id);
+        socket.emit("presence:snapshot", { online: presence.onlineAmong(friends.map((f) => f.id)) });
+        if (wentOnline) await broadcastPresence(user.id, true);
+      })();
+
+      socket.on("disconnect", () => {
+        if (presence.disconnect(user.id)) void broadcastPresence(user.id, false);
+      });
+    }
 
     // Lectura pública de foros: cualquiera (incluso anónimo) se une a la room del foro.
     socket.on("forum:join", async (payload: { conversationId?: string }) => {
