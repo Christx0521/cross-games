@@ -38,20 +38,28 @@ export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () =>
   }
 
   return (
-    <div className="h-full overflow-y-auto p-6 max-w-xl">
-      <div className="flex items-center gap-4 mb-4">
+    <div className="h-full overflow-y-auto max-w-xl">
+      {/* Banner */}
+      <div className="h-36 w-full bg-gradient-to-r from-[var(--color-surface-2)] to-[var(--color-purple)]">
+        {profile.banner_url && (
+          <img src={`${API_BASE}${profile.banner_url}`} alt="banner" className="h-36 w-full object-cover" />
+        )}
+      </div>
+
+      <div className="px-6 pb-6">
+      <div className="flex items-end gap-4 -mt-12 mb-4">
         {profile.avatar_url ? (
           <img
             src={`${API_BASE}${profile.avatar_url}`}
             alt={profile.nickname}
-            className="w-24 h-24 rounded-full object-cover ring-2 ring-[var(--color-pink)]"
+            className="w-24 h-24 rounded-full object-cover ring-4 ring-[var(--color-bg)]"
           />
         ) : (
-          <div className="w-24 h-24 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-4xl text-[var(--color-pink)]">
+          <div className="w-24 h-24 rounded-full bg-[var(--color-surface-2)] ring-4 ring-[var(--color-bg)] flex items-center justify-center text-4xl text-[var(--color-pink)]">
             {profile.nickname.charAt(0).toUpperCase()}
           </div>
         )}
-        <div>
+        <div className="pb-1">
           <h1 className="text-2xl font-bold text-[var(--color-pink)]">{profile.nickname}</h1>
           <div className="flex items-center gap-2 mt-1">
             {profile.country_code && <span className="text-lg">{flagEmoji(profile.country_code)}</span>}
@@ -65,6 +73,19 @@ export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () =>
       </div>
 
       {profile.description && <p className="mb-4 text-[var(--color-text)]">{profile.description}</p>}
+
+      {profile.games.length > 0 && (
+        <div className="mb-4">
+          <h2 className="text-xs uppercase text-[var(--color-comment)] mb-2">🎮 Juegos favoritos</h2>
+          <div className="flex flex-wrap gap-2">
+            {profile.games.map((game) => (
+              <span key={game} className="text-sm px-3 py-1 rounded-full bg-[var(--color-surface-2)] text-[var(--color-text)] border border-[var(--color-border)]">
+                {game}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {profile.languages.length > 0 && (
         <div className="mb-6 flex flex-wrap gap-2">
@@ -93,6 +114,7 @@ export function Profile({ nickname, onEdit }: { nickname: string; onEdit?: () =>
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

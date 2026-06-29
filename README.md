@@ -82,4 +82,8 @@ cd server; npm test
   - `GET /notifications`, `GET /notifications/unread`, `POST /notifications/read`, `POST /notifications/:id/read`. Entrega en vivo por Socket.IO (`notification:new`).
   - UI: sección **🔔 Avisos** con badge de no leídos en el rail y resaltado de `@menciones` en el texto.
 
-**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)** + **M13 (feed/muro social)** + **menciones + notificaciones**. Próximo: stories efímeras, perfil rico con juegos, moderación (bloquear/reportar). M9 (juegos) más adelante.
+- **Perfil rico: completo.**
+  - Banner/portada (`POST /me/banner`) + juegos favoritos (lista de títulos, máx 12, deduplicados) vía `PATCH /me/profile`.
+  - `GET /users/:nickname` ahora incluye `banner_url` y `games`. UI: banner en el perfil con avatar superpuesto y chips de juegos; edición en "Editar perfil".
+
+**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)** + **M13 (feed/muro social)** + **menciones + notificaciones** + **perfil rico (banner + juegos)**. Próximo: stories efímeras, moderación (bloquear/reportar). M9 (juegos) más adelante.

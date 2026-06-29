@@ -5,6 +5,7 @@ export interface ProfileRow {
   nickname: string;
   birth_year: number;
   avatar_url: string | null;
+  banner_url: string | null;
   description: string | null;
   country_code: string | null;
 }
@@ -13,7 +14,7 @@ export function createProfileRepo(db: PGlite) {
   return {
     async findProfileByNickname(nickname: string): Promise<ProfileRow | null> {
       const r = await db.query<ProfileRow>(
-        `SELECT id, nickname, birth_year, avatar_url, description, country_code
+        `SELECT id, nickname, birth_year, avatar_url, banner_url, description, country_code
          FROM users WHERE nickname = $1`,
         [nickname]
       );
@@ -26,6 +27,28 @@ export function createProfileRepo(db: PGlite) {
         [userId]
       );
       return r.rows.map((x) => x.language_code);
+    },
+
+    async getGames(userId: string): Promise<string[]> {
+      const r = await db.query<{ game: string }>(
+        "SELECT game FROM user_games WHERE user_id = $1 ORDER BY position, game",
+        [userId]
+      );
+      return r.rows.map((x) => x.game);
+    },
+
+    async setGames(userId: string, games: string[]): Promise<void> {
+      await db.query("DELETE FROM user_games WHERE user_id = $1", [userId]);
+      for (let i = 0; i < games.length; i++) {
+        await db.query(
+          "INSERT INTO user_games (user_id, game, position) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+          [userId, games[i], i]
+        );
+      }
+    },
+
+    async setBannerUrl(userId: string, url: string): Promise<void> {
+      await db.query("UPDATE users SET banner_url = $1 WHERE id = $2", [url, userId]);
     },
 
     async updateProfile(

@@ -1,9 +1,11 @@
 export interface PublicProfile {
   nickname: string;
   avatar_url: string | null;
+  banner_url: string | null;
   description: string | null;
   country_code: string | null;
   languages: string[];
+  games: string[];
   is_adult: boolean;
 }
 

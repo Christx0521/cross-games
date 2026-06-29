@@ -64,3 +64,31 @@ test("setAvatarUrl se refleja en el perfil público", async () => {
   const p = await s.service.getPublicProfile("neo");
   assert.equal(p.avatar_url, "/uploads/a.png");
 });
+
+test("updateProfile guarda juegos favoritos deduplicados y en orden", async () => {
+  const s = await setup();
+  await s.service.updateProfile(s.user.id, { games: ["  Valorant ", "LoL", "valorant", "Apex"] });
+  const p = await s.service.getPublicProfile("neo");
+  assert.deepEqual(p.games, ["Valorant", "LoL", "Apex"]);
+});
+
+test("updateProfile con más de 12 juegos → 422", async () => {
+  const s = await setup();
+  const games = Array.from({ length: 13 }, (_, i) => `Juego ${i}`);
+  await assert.rejects(
+    s.service.updateProfile(s.user.id, { games }),
+    (e: AppError) => e.statusCode === 422 && e.code === "too_many_games"
+  );
+});
+
+test("setBanner persiste y se ve en el perfil público", async () => {
+  const s = await setup();
+  const storageService = createProfileService({
+    repo: s.profileRepo,
+    storage: { async save() { return "/uploads/banner.png"; } },
+  });
+  const r = await storageService.setBanner(s.user.id, Buffer.from("x"), "image/png");
+  assert.equal(r.banner_url, "/uploads/banner.png");
+  const p = await s.service.getPublicProfile("neo");
+  assert.equal(p.banner_url, "/uploads/banner.png");
+});
