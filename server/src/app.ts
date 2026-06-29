@@ -39,6 +39,9 @@ import { notificationsRoutes } from "./modules/notifications/routes.ts";
 import { createModerationRepo } from "./modules/moderation/repo.ts";
 import { createModerationService } from "./modules/moderation/service.ts";
 import { moderationRoutes } from "./modules/moderation/routes.ts";
+import { createStoriesRepo } from "./modules/stories/repo.ts";
+import { createStoriesService } from "./modules/stories/service.ts";
+import { storiesRoutes } from "./modules/stories/routes.ts";
 import { createAuthRepo } from "./modules/auth/repo.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
@@ -147,6 +150,11 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
     blockedIds: moderationService.blockedIds,
   });
   const friendsService = createFriendsService({ repo: friendsRepo, notify, isBlocked: moderationService.isBlocked });
+  const storiesService = createStoriesService({
+    repo: createStoriesRepo(opts.db),
+    friendsRepo,
+    blockedIds: moderationService.blockedIds,
+  });
   const groupsService = createGroupsService({ repo: groupsRepo, notify });
 
   const presence = createPresence();
@@ -281,6 +289,7 @@ export async function buildApp(opts: { db: PGlite }): Promise<FastifyInstance> {
   await app.register(feedRoutes, { feedService, sessionService, storage });
   await app.register(notificationsRoutes, { notificationsService, sessionService });
   await app.register(moderationRoutes, { moderationService, sessionService });
+  await app.register(storiesRoutes, { storiesService, sessionService, storage });
 
   return app;
 }

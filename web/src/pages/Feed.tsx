@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { api } from "../lib/api.ts";
 import { type Post, type PostsPage } from "../lib/feed.ts";
 import { PostCard } from "../components/PostCard.tsx";
+import { Stories } from "../components/Stories.tsx";
 import { Alert } from "../components/ui.tsx";
 
 export function Feed() {
@@ -74,6 +75,8 @@ export function Feed() {
       <div className="max-w-xl mx-auto p-5">
         <h1 className="text-2xl font-bold mb-4 text-[var(--color-pink)]">Inicio</h1>
         {error && <Alert kind="error">{error}</Alert>}
+
+        <Stories />
 
         <form onSubmit={publish} className="mb-5 p-4 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
           <textarea

@@ -90,4 +90,9 @@ cd server; npm test
   - Bloquear/desbloquear usuarios (`POST/DELETE /blocks`, `GET /blocks`) y reportar contenido (`POST /reports`: user/post/thread/comment/message).
   - El bloqueo (bidireccional) impide abrir DM y enviar solicitud de amistad, y oculta los posts en el feed. UI: menú ⋯ en cada post (reportar/bloquear) y gestión de bloqueados en "Editar perfil".
 
-**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10 (presencia + no leídos)** + **M11 (reacciones emoji + imágenes en el chat)** + **M12 (foros estilo Reddit + búsqueda)** + **M13 (feed/muro social)** + **menciones + notificaciones** + **perfil rico (banner + juegos)** + **moderación (bloquear/reportar)**. Próximo: stories efímeras. M9 (juegos) más adelante.
+- **Stories efímeras: completo.**
+  - Imagen + caption que expira a las 24h (filtrado por `expires_at`, sin cron). Visibles para amigos + propias, respetando bloqueos.
+  - `GET /stories` (agrupadas por autor, con visto/no visto), `POST /stories` (multipart), `POST /stories/:id/view`, `DELETE /stories/:id`.
+  - UI: anillos arriba del feed (degradado si hay no vistas), visor a pantalla completa con barras de progreso y navegación por toque.
+
+**MVP M1–M8 completo** + rediseño App Shell/Sakura + **M10–M13** + **menciones + notificaciones** + **perfil rico (banner + juegos)** + **moderación (bloquear/reportar)** + **stories efímeras (24h)**. Pendiente: M9 (integración con juegos/Steam).
