@@ -93,6 +93,15 @@ export function createChatService(deps: { repo: ChatRepo }) {
       return repo.getConversationType(conversationId);
     },
 
+    async markRead(userId: string, conversationId: string): Promise<void> {
+      await ensureMember(conversationId, userId);
+      await repo.markRead(conversationId, userId);
+    },
+
+    getUnreadCounts(userId: string): Promise<Array<{ conversation_id: string; count: number }>> {
+      return repo.getUnreadCounts(userId);
+    },
+
     getMemberIds(conversationId: string): Promise<string[]> {
       return repo.getMemberIds(conversationId);
     },

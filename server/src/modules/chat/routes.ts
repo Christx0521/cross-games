@@ -47,4 +47,20 @@ export async function chatRoutes(
     async (req) =>
       chatService.getHistory(req.user!.id, req.params.id, req.query.before, req.query.limit)
   );
+
+  fastify.get("/conversations/unread", { preHandler: guard }, async (req) =>
+    chatService.getUnreadCounts(req.user!.id)
+  );
+
+  fastify.post<{ Params: { id: string } }>(
+    "/conversations/:id/read",
+    {
+      preHandler: guard,
+      schema: { params: { type: "object", required: ["id"], properties: { id: { type: "string", format: "uuid" } } } } as const,
+    },
+    async (req) => {
+      await chatService.markRead(req.user!.id, req.params.id);
+      return { ok: true };
+    }
+  );
 }

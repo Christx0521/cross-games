@@ -67,6 +67,33 @@ export function createChatRepo(db: PGlite) {
       return r.rows.length > 0;
     },
 
+    // Marca la conversación como leída hasta el último mensaje existente.
+    async markRead(conversationId: string, userId: string): Promise<void> {
+      await db.query(
+        `INSERT INTO conversation_reads (conversation_id, user_id, last_read_seq, updated_at)
+         VALUES ($1, $2, (SELECT COALESCE(MAX(seq), 0) FROM messages WHERE conversation_id = $1), now())
+         ON CONFLICT (conversation_id, user_id)
+         DO UPDATE SET last_read_seq = EXCLUDED.last_read_seq, updated_at = now()`,
+        [conversationId, userId]
+      );
+    },
+
+    // Cuenta mensajes no leídos (de otros) por conversación donde el usuario es miembro.
+    async getUnreadCounts(userId: string): Promise<Array<{ conversation_id: string; count: number }>> {
+      const r = await db.query<{ conversation_id: string; count: number }>(
+        `SELECT m.conversation_id, COUNT(*)::int AS count
+         FROM messages m
+         JOIN conversation_members cm
+           ON cm.conversation_id = m.conversation_id AND cm.user_id = $1
+         LEFT JOIN conversation_reads r
+           ON r.conversation_id = m.conversation_id AND r.user_id = $1
+         WHERE m.sender_id <> $1 AND m.seq > COALESCE(r.last_read_seq, 0)
+         GROUP BY m.conversation_id`,
+        [userId]
+      );
+      return r.rows.map((x) => ({ conversation_id: x.conversation_id, count: Number(x.count) }));
+    },
+
     async getMemberIds(conversationId: string): Promise<string[]> {
       const r = await db.query<{ user_id: string }>(
         "SELECT user_id FROM conversation_members WHERE conversation_id = $1",

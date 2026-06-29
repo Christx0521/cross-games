@@ -78,3 +78,30 @@ test("getHistory de no-miembro → 403", async () => {
     (e: AppError) => e.statusCode === 403
   );
 });
+
+test("no leídos: cuenta mensajes ajenos y se limpia al marcar leído", async () => {
+  const s = await setup();
+  const { conversationId } = await s.service.getOrCreateDm(s.a.id, "bob");
+  await s.service.postMessage(s.b.id, conversationId, "hola 1");
+  await s.service.postMessage(s.b.id, conversationId, "hola 2");
+
+  const unreadA = await s.service.getUnreadCounts(s.a.id);
+  assert.equal(unreadA.find((u) => u.conversation_id === conversationId)?.count, 2);
+
+  // El propio emisor (bob) no tiene no leídos de sus mensajes
+  const unreadB = await s.service.getUnreadCounts(s.b.id);
+  assert.equal(unreadB.find((u) => u.conversation_id === conversationId), undefined);
+
+  await s.service.markRead(s.a.id, conversationId);
+  const after = await s.service.getUnreadCounts(s.a.id);
+  assert.equal(after.find((u) => u.conversation_id === conversationId), undefined);
+});
+
+test("markRead de no-miembro → 403", async () => {
+  const s = await setup();
+  const { conversationId } = await s.service.getOrCreateDm(s.a.id, "bob");
+  await assert.rejects(
+    s.service.markRead(s.c.id, conversationId),
+    (e: AppError) => e.statusCode === 403
+  );
+});
