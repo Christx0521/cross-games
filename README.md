@@ -1,6 +1,25 @@
 # Cross-Games
 
-Plataforma de chat para gamers. MVP en construcción módulo a módulo.
+![Node](https://img.shields.io/badge/Node-24-339933?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Fastify](https://img.shields.io/badge/Fastify-5-000000?logo=fastify&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Tailwind](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Realtime-Socket.IO-010101?logo=socket.io&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+**Red social y de chat en tiempo real para gamers.** DMs, grupos, foros estilo Reddit,
+feed/muro social, stories efímeras, presencia en vivo, moderación e integración con
+Steam — todo sobre un backend tipado en capas y un frontend React con tema Dracula.
+Construido módulo a módulo (M1–M13 + extras), con tests y SQL crudo parametrizado sin ORM.
+
+> Proyecto personal de **Christian Xavier Nieto** ([@Christx0521](https://github.com/Christx0521)).
+
+<!-- TODO: reemplazar por capturas/GIF reales de la app (chat, feed, foros, stories). -->
+<p align="center">
+  <img src="docs/img/cross-games.png" alt="Cross-Games — interfaz" width="800">
+  <br><em>(Capturas pendientes: chat en vivo, feed, foros Reddit y stories — tema Dracula.)</em>
+</p>
 
 ## Stack
 
