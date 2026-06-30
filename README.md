@@ -15,10 +15,9 @@ Construido módulo a módulo (M1–M13 + extras), con tests y SQL crudo parametr
 
 > Proyecto personal de **Christian Xavier Nieto** ([@Christx0521](https://github.com/Christx0521)).
 
-<!-- TODO: reemplazar por capturas/GIF reales de la app (chat, feed, foros, stories). -->
 <p align="center">
-  <img src="docs/img/cross-games.png" alt="Cross-Games — interfaz" width="800">
-  <br><em>(Capturas pendientes: chat en vivo, feed, foros Reddit y stories — tema Dracula.)</em>
+  <img src="img/crossgame-img.jpg" alt="Cross-Games — vista Inicio (feed + stories)" width="800">
+  <br><em>Vista Inicio: feed con stories y composer, tema Dracula con acento neón.</em>
 </p>
 
 ## Stack
