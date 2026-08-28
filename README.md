@@ -13,7 +13,7 @@ feed/muro social, stories efímeras, presencia en vivo, moderación e integraci�
 Steam — todo sobre un backend tipado en capas y un frontend React con tema Dracula.
 Construido módulo a módulo (M1–M13 + extras), con tests y SQL crudo parametrizado sin ORM.
 
-> Proyecto personal de **Christian Xavier Nieto** ([@Christx0521](https://github.com/Christx0521)).
+> Proyecto personal de **Christian Xavier Nieto** ([@cxnieto](https://github.com/cxnieto)).
 
 <p align="center">
   <img src="img/crossgame-img.jpg" alt="Cross-Games — vista Inicio (feed + stories)" width="800">
